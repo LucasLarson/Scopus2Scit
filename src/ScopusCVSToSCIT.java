@@ -779,9 +779,7 @@ public class ScopusCVSToSCIT
 			botonSeleccionadorArchivos.setEnabled(true);
 		}
 	}
-
-
-
+	
 	int encuentraIndice( String [] arreglo, String cadenaAencontrar )
 	{
 		int indice=0;
@@ -969,7 +967,7 @@ public class ScopusCVSToSCIT
 		areaBotonSeleccionadorArchivos.add(etiquetaVacia3);
 
 		areaSeleccionadorArchivos.add(areaBotonSeleccionadorArchivos, BorderLayout.PAGE_START);
-
+		
 		// Muestra ProgressBar y TexArea
 		JPanel areaProgressBar = new JPanel();
 		areaProgressBar.setLayout( new BorderLayout() );
@@ -1012,7 +1010,7 @@ public class ScopusCVSToSCIT
 		areaProgressBar.add(areaSoloAreaTexto, BorderLayout.CENTER);
 
 		areaSeleccionadorArchivos.add(areaProgressBar,BorderLayout.CENTER);
-
+		
 		return areaSeleccionadorArchivos;
 	}// private JPanel creaAreaBotonSelecionaArchivos(  )
 
@@ -1022,14 +1020,19 @@ public class ScopusCVSToSCIT
 		JFrame.setDefaultLookAndFeelDecorated(true);
 		JFrame frame= new JFrame("IDABI-Scopus");
 		JPanel areaBotonSelecionaArchivos = creaAreaBotonSelecionaArchivos(  );
+				
 		frame.setLayout( new GridLayout(1,1) );
 		frame.add( areaBotonSelecionaArchivos );
+
 		frame.setSize(500, 400);
 		frame.setTitle("IDABI-Scopus");
 		frame.setLocation(30, 30);
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		frame.setVisible( true ); // Permitimos su visualización una vez que se encuentra terminado el frame
 		frame.setResizable(false);
+		
+		
+		
 
 		botonSeleccionadorArchivos.addActionListener
 		(

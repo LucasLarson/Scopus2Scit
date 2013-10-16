@@ -183,7 +183,6 @@ public class CompletarPublicacion {
 		
 		tokens = publicacion.split("\\s");
 		
-
 		// Se revisa token por token de la publicacion
 		for (int i = 0; i < tokens.length; i++) {			
 
