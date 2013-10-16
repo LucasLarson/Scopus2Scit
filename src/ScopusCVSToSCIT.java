@@ -29,6 +29,8 @@ public class ScopusCVSToSCIT
 	private JProgressBar progressBar;
 	private JTextArea areaTexto;
 	private JButton botonSeleccionadorArchivos;
+	private JButton botonIniciar;
+	private JCheckBox wos;
 
 	private String salida="";
 	private String [] renglones;
@@ -952,13 +954,24 @@ public class ScopusCVSToSCIT
 
 		// Muestra botón de acción del área
 		JPanel areaBotonSeleccionadorArchivos = new JPanel();
-		areaBotonSeleccionadorArchivos.setLayout(new FlowLayout());
+		areaBotonSeleccionadorArchivos.setLayout(new BorderLayout());
 
 		JLabel etiquetaVacia2 = new JLabel("  ");
 		areaBotonSeleccionadorArchivos.add(etiquetaVacia2);
 
+		JPanel areaBotones = new JPanel();
+		areaBotones.setLayout(new GridLayout(1,2,5,0)); //El cinco es la separacion horizontal entre los controles
+		
 		botonSeleccionadorArchivos = new JButton(" Seleccionar archivos ");
-		areaBotonSeleccionadorArchivos.add(botonSeleccionadorArchivos);
+		botonIniciar = new JButton("Iniciar");
+		
+		areaBotones.add(botonSeleccionadorArchivos);
+		areaBotones.add(botonIniciar);
+		
+		areaBotonSeleccionadorArchivos.add(areaBotones, BorderLayout.PAGE_START);
+
+		wos = new JCheckBox("Procesar como archivo WOS", false);		
+		areaBotonSeleccionadorArchivos.add(wos,BorderLayout.PAGE_END);
 
 		JLabel etiquetaVacia000 = new JLabel(" ");
 		areaBotonSeleccionadorArchivos.add(etiquetaVacia000);
@@ -996,7 +1009,7 @@ public class ScopusCVSToSCIT
 
 		Font fuente = new Font("Courier New", Font.PLAIN, 12);		
 		areaTexto= new JTextArea();
-		areaTexto.setRows( 20 );	// Alto
+		areaTexto.setRows( 18 );	// Alto
 		areaTexto.setColumns( 50 ); // Ancho
 		areaTexto.setEditable( false ); 
 		areaTexto.setFont(fuente);
@@ -1018,22 +1031,20 @@ public class ScopusCVSToSCIT
 	public ScopusCVSToSCIT ()
 	{
 		JFrame.setDefaultLookAndFeelDecorated(true);
-		JFrame frame= new JFrame("IDABI-Scopus");
+		JFrame ventana= new JFrame("IDABI-Scopus");
 		JPanel areaBotonSelecionaArchivos = creaAreaBotonSelecionaArchivos(  );
 				
-		frame.setLayout( new GridLayout(1,1) );
-		frame.add( areaBotonSelecionaArchivos );
-
-		frame.setSize(500, 400);
-		frame.setTitle("IDABI-Scopus");
-		frame.setLocation(30, 30);
-		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-		frame.setVisible( true ); // Permitimos su visualización una vez que se encuentra terminado el frame
-		frame.setResizable(false);
+		ventana.setLayout( new FlowLayout() );
+		ventana.add( areaBotonSelecionaArchivos );
+		ventana.setSize(500, 400);
+		ventana.setTitle("IDABI-Scopus");
+		ventana.setLocation(30, 30);
+		ventana.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		ventana.setVisible( true ); // Permitimos su visualización una vez que se encuentra terminado el frame
+		ventana.setResizable(false);
 		
 		
-		
-
+		// Agregar funcionalidad al botón Iniciar
 		botonSeleccionadorArchivos.addActionListener
 		(
 				new ActionListener()
