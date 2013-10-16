@@ -362,7 +362,8 @@ public class ScopusCVSToSCIT
 
 										if( institucion.compareTo("NO DISPONIBLE")==0 && pais.compareTo("NO DISPONIBLE")!=0 ){
 											institucion = "NO DISPONIBLE" + " - " + pais; //Para distinguir "NO DISPONIBLE" en varios países
-											new EscribirEnArchivoTexto(auxInstitucion +" >>> " + apellidoA + "," + nombreA + " >>> " + tituloAcutal,"Salidas\\Scopus\\"+nombreArchivoLimpio+"_INTITUCIONES.LOG");
+											
+											new EscribirEnArchivoTexto("NO ENTENDIBLE >>> " + apellidoA + "," + nombreA + " >>> " + tituloAcutal,"Salidas\\Scopus\\"+nombreArchivoLimpio+"_INTITUCIONES.LOG");
 										}
 										auxInstitucion = institucion + "," + pais;
 										cadenaInstituciones += auxInstitucion + "\t";
