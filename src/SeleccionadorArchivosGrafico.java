@@ -21,7 +21,7 @@ public class SeleccionadorArchivosGrafico
 	
 	private String ruta;
 	
-	public SeleccionadorArchivosGrafico (String mensaje, String extension)
+	public SeleccionadorArchivosGrafico (String mensaje, String ... extension)
 	{
 		archivosSeleccionados = new String[0];
 		archivosSeleccionados_ruta = new String[0];

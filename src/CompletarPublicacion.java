@@ -201,8 +201,8 @@ public class CompletarPublicacion {
 			publicacion += token + " ";
 
 		publicacion = publicacion.trim();
-
 		System.out.println(publicacion);
+
 		return publicacion;
 	}
 }
