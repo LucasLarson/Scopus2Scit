@@ -19,6 +19,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.regex.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.text.DecimalFormat;
 
 /* Comma/Tab Separated Values To SCIT -> XSVToSCIT */
@@ -46,8 +47,12 @@ public class XSVToSCIT {
 		// int cycles = 1;
 
 		public void run() {
-			// fromScopus();
-			fromWOS();
+			
+			if(wos.isSelected())
+				fromWOS();
+			else
+				fromScopus();
+			
 		}
 	}
 
@@ -972,7 +977,6 @@ public class XSVToSCIT {
 		cadenaArchivo = cadenaArchivo.toUpperCase();
 
 		progressBar.setValue(15);
-		areaTexto.append("\nAcomodando columnas recorridas...");
 
 		// Crea la carpeta de resultados
 		File folder2;
@@ -1056,7 +1060,7 @@ public class XSVToSCIT {
 					String [] resultado = parseC1Wos(entradasSeparadas[columnaActual]);
 					cadenaAutores = resultado[0] + resultado[1];
 					cadenaAfiliaciones = resultado[1];
-					System.out.println(cadenaAutores);
+					//System.out.println(cadenaAutores);
 				}				
 				else
 					autores = nada.split(";");
@@ -1123,20 +1127,10 @@ public class XSVToSCIT {
 							// Tipo por defecto: Artículo
 							tipo = 1;
 
-							if (cadena.compareTo("ARTICLE") == 0)// ARTÍCULO
-								tipo = 1;
-							else if (cadena.compareTo("BOOK REVIEW") == 0) // LIBRO
-								tipo = 2;
-							else if (cadena.compareTo("BOOK CHAPTER") == 0) // CAPÍTULO DE LIBRO
-								tipo = 3;
-							else if (cadena.compareTo("REVIEW") == 0)// RESEÑA
-								tipo = 4;
-							else if (cadena.compareTo("MEETING ABSTRACT") == 0)// ARTÍCULO DE CONGRESO
-								tipo = 7;
-							else if (cadena.compareTo("CONFERENCE PAPER") == 0)// ARTÍCULO DE CONGRESO
+							if(cadena.contains("MEETING") || cadena.contains("PROCEEDINGS"))
 								tipo = 7;
 							else
-								tipo = 0;
+								tipo = 1;
 							
 							// Publicación (posición 4)
 							columnaActual = encuentraIndice(encabezado,"SO");
@@ -1176,8 +1170,7 @@ public class XSVToSCIT {
 								renglonSalida += cadena + "\t";
 
 								// Volumen (posición 40)
-								columnaActual = encuentraIndice(encabezado,
-										"VL");
+								columnaActual = encuentraIndice(encabezado,"VL");
 
 								if (columnaActual != -1)
 									cadena = entradasSeparadas[columnaActual].toUpperCase();
@@ -1308,7 +1301,7 @@ public class XSVToSCIT {
 									cadena = nada;
 
 								renglonSalida += cadena + "\t";
-
+								/*
 								// REFERENCIAS (posición 23)
 								{
 									cadenaReferencias = "";
@@ -1322,9 +1315,7 @@ public class XSVToSCIT {
 									// Eric Gcc: Lo puse para tratar de
 									// limpiar el nombre de las
 									// publicaciones en las referencias
-									/**
-									 * @author EGarciaCanoCa (03/10/2013)
-									 */
+
 									cadena = cadena.replaceAll(
 											"PROCEEDINGS OF THE", " ");
 									cadena = cadena.replaceAll(
@@ -1367,7 +1358,7 @@ public class XSVToSCIT {
 										Referencias ref = new Referencias();
 										cadenaReferencias = ref.analizaReferencias(cadena, MAX_NUMERO_AUTORES, MAX_NUMERO_PALABRAS);
 									}
-								}
+								}*/
 
 								// Marca de final
 								renglonSalida += "***\t";
@@ -1453,6 +1444,7 @@ public class XSVToSCIT {
 		
 		int beginIndex = 0, endIndexAutores = 0, endIndexAfiliacion = 0;
 		boolean terminaronAutores = false;
+		cuentaAutores = 0;
 		
 		// Se recorre toda la cadena
 		for(character = 0; character < C1.length(); character++){			
@@ -1465,23 +1457,46 @@ public class XSVToSCIT {
 				terminaronAutores = true;
 				
 				// Se sapara cada autor
-				autores = C1.substring(beginIndex+1, character).split(";");
+				autores = C1.substring(beginIndex+1, character).split(";");			
 				
 				// Se le quitan los espaciones y se convierte a mayúscula
 				for(int i = 0; i < autores.length; i++){
 					autores[i] = autores[i].trim().toUpperCase();		
 					autores[i] = autores[i].replace(".", "");
 					autores[i] = autores[i].replace("\'", "");
+					
+					
+					// Para juntar iniciales en el nombre, por ejemplo: DAY, S A => DAY,SA ; SHIN, PAUL J K => SHIN, PAUL JK
+					//Se separa el nombre del autor por apellido y nombre
+					String [] tokensAutor = autores[i].split(",");
+					
+					// Si efectivamente, tiene apellido y nombre
+					if(tokensAutor.length > 1 && tokensAutor[1].length() > 1){// tokens[1] son los nombres
+						String [] auxAutor = tokensAutor[1].split(" ");
+						
+						if(auxAutor.length > 1){
+							String nombre = "";
+							for(int j = 0; j < auxAutor.length; j++){ 
+								
+								if(auxAutor[j].length() > 1){
+									nombre += auxAutor[j] + " ";
+								}else{
+									nombre += auxAutor[j];									
+								}
+							}
+							autores[i] = tokensAutor[0]+","+nombre.trim();
+						}						
+					}
 				}
 				for(String autor : autores){					
 					if(!autoresConAfiliacion.containsKey(autor)){
 						//System.out.println(!autoresConAfiliacion.contains(autor.trim()) + " " + autor);
 						autoresConAfiliacion.put(autor, "");
-						
+						cadenaAutores += autor + "\t";
+						cuentaAutores++;
 					}
-				}
-				beginIndex = character+1;
-				
+				}				
+				beginIndex = character+1;			
 			}
 			// El ; separa a los autores de una institucion de los autores de otra
 			if((C1.charAt(character) == ';' && terminaronAutores == true) || character == C1.length()-1){
@@ -1493,25 +1508,26 @@ public class XSVToSCIT {
 				for(int i = 0; i < afiliaciones.length; i++)
 					afiliaciones[i] = afiliaciones[i].trim().toUpperCase();	
 				
-				afiliacion = pubs.completaISSN(afiliaciones[0]) + "," + afiliaciones[afiliaciones.length-1].replace(";", "");				
+				afiliaciones[afiliaciones.length-1] = afiliaciones[afiliaciones.length-1].replace(";", "").replaceAll("[0-9]+", "");
+				
+				if(afiliaciones[afiliaciones.length-1].contains("USA"))
+					afiliaciones[afiliaciones.length-1] = "USA";
+											
+				
+				afiliacion = pubs.completaISSN(afiliaciones[0]) + "," + afiliaciones[afiliaciones.length-1];				
 					
 				
 				for(String autor : autores){
 					if(autoresConAfiliacion.get(autor).isEmpty()){
 						autoresConAfiliacion.put(autor, afiliacion.trim());
+						cadenaAfiliaciones += autoresConAfiliacion.get(autor) + "\t";	
 					}
 				}
 					
-			}
-		}
-		cuentaAutores = 0;
+			}	
+		}// Fin for	
 		
-		while (cuentaAutores < autores.length && cuentaAutores < MAX_NUMERO_AUTORES) {
-			cadenaAutores += autores[cuentaAutores] + "\t";			
-			cadenaAfiliaciones += autoresConAfiliacion.get(autores[cuentaAutores]) + "\t";		
-			cuentaAutores++;
-		}
-		
+				
 		for (int i = cuentaAutores; i < MAX_NUMERO_AUTORES; i++) {
 			cadenaAutores += "\t";
 			cadenaAfiliaciones += "\t";
@@ -1853,7 +1869,7 @@ public class XSVToSCIT {
 
 				if (archivosOriginales.length > 0)
 					new Thread(new thread1()).start();
-				else
+				
 					botonSeleccionadorArchivos.setEnabled(true);
 			}
 		});
