@@ -13,14 +13,11 @@
  */
 
 import javax.swing.*;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.regex.*;
 import java.util.*;
-import java.util.Map.Entry;
-import java.text.DecimalFormat;
 
 /* Comma/Tab Separated Values To SCIT -> XSVToSCIT */
 public class XSVToSCIT {
@@ -30,13 +27,13 @@ public class XSVToSCIT {
 	private JTextArea areaTexto;
 	private JButton botonSeleccionadorArchivos;
 	private JButton botonIniciar;
-	private JCheckBox wos;
+	private JComboBox<String> source;
 	int cycles = 1;
 
-	private String salida = "";
 	private String[] renglones;
 	private final int MAX_NUMERO_AUTORES = 8;
 	private final int MAX_NUMERO_PALABRAS = 6;
+	private String sourceName = "";
 
 	public static void main(String[] args) {
 		new XSVToSCIT();
@@ -47,12 +44,23 @@ public class XSVToSCIT {
 		// int cycles = 1;
 
 		public void run() {
-			
+			/*
 			if(wos.isSelected())
 				fromWOS();
-			else
-				fromScopus();
+			else*/
 			
+			if(source.getSelectedItem().toString().compareTo("Scopus") == 0){
+				sourceName = "{SCOPUS}";
+				fromScopus();				
+			}else if(source.getSelectedItem().toString().compareTo("Web Of Science") == 0){
+				sourceName = "{WOS}";
+				fromWOS();				
+			}else{
+				JOptionPane.showMessageDialog(null,"No hay nada que hacer");
+				archivosOriginales = null;
+				archivosOriginales_conRuta = null;
+				botonSeleccionadorArchivos.setEnabled(true);
+			}
 		}
 	}
 
@@ -103,12 +111,9 @@ public class XSVToSCIT {
 
 		String institucion = "";
 		String pais = "";
-		int idPais = 0;
-		int idPaisNoDisponible = 0;
 		int tipo = 0;
 		int columnaActual = 0;
 		int cuentaAutores = 0;
-		int ultimoGuion = 0;
 		int cuentaPalabras = 0;
 		boolean datosEsenciales = true;
 		boolean banderaCorrespondingAuthor = false;
@@ -120,7 +125,7 @@ public class XSVToSCIT {
 		progressBar.setValue(0);
 		areaTexto.append("Cambiando Formato a Separación por Tabuladores...");
 
-		ConvierteCvsATab convierteCvsATab = new ConvierteCvsATab(
+		new ConvierteCvsATab(
 				archivosOriginales_conRuta[0], "Salidas\\Scopus\\SalidasTABS");
 
 		lectura = new LeerArchivoTexto("Salidas\\Scopus\\SalidasTABS\\"
@@ -132,12 +137,13 @@ public class XSVToSCIT {
 		cadenaArchivo = lectura.getArchivoEnCadena();
 		progressBar.setValue(10);
 
-		areaTexto.append("\nLimpiando texto...");
-
+		areaTexto.append("\nLimpiando texto...");		
+		
 		cadenaArchivo = quitaCaracteresEspeciales(cadenaArchivo);
 		cadenaArchivo = cadenaArchivo.toUpperCase();
 
 		progressBar.setValue(15);
+		areaTexto.append(" OK!");
 		areaTexto.append("\nAcomodando columnas recorridas...");
 
 		AcomodaTABScopus acomodaTABScopus = new AcomodaTABScopus(cadenaArchivo);
@@ -170,19 +176,15 @@ public class XSVToSCIT {
 		contador = 1; // la primera línea es el encabezado
 
 		progressBar.setValue(20);
-		areaTexto.append("\t\t OK!");
+		areaTexto.append(" OK!");
 		areaTexto.append("\n\nProcesando información...");
 
-		int datosInstitucion = 0;
 		int cuentaAutoresIngresados = 0;
 		int cuentaPalabrasIngresadas = 0;
 		boolean banderaAutor = false;
 		int banderaCasoEspecial = 0;
 		String cadenaAutores = "";
-		String cadenaAfiliaciones = "";
 		String[] auxAutor;
-		String[] renglonesReferencias;
-		// String [] afiliacion;
 		String cadenaInstituciones = "";
 		String auxInstitucion = "";
 		int inicio = 0;
@@ -210,6 +212,7 @@ public class XSVToSCIT {
 		salidaCompleta += "REF. ACTUALES" + "\t";
 		salidaCompleta += "PATRON DE REF." + "\t";
 		salidaCompleta += "DESCONOCIDO EN REF." + "\n";
+		
 
 		apellidosIngresados = new String[MAX_NUMERO_AUTORES];
 		nombresIngresados = new String[MAX_NUMERO_AUTORES];
@@ -217,13 +220,13 @@ public class XSVToSCIT {
 		while (contador < renglones.length) {
 			datosEsenciales = true;
 			entradasSeparadas = renglones[contador].split("\t");
-			if (entradasSeparadas.length >= 40)// Si hay datos suficientes
-												// en el renglón
-			{
-				renglonSalida = "\t";// Como es principal, el campo REF.
-										// ORIGINAL COMPLETA va vacío
-				renglonSalida += "GRRRU\t";// Como es principal, el campo ES
-											// PRINCIPAL lleva una marca
+			if (entradasSeparadas.length >= 40)// Si hay datos suficientes en el renglón
+			{		
+				if(contador == 1)
+					renglonSalida = sourceName+"\t";
+				else
+					renglonSalida = "\t";// Como es principal, el campo REF. ORIGINAL COMPLETA va vacío 
+				renglonSalida += "GRRRU\t";// Como es principal, el campo ES PRINCIPAL lleva una marca
 
 				// Autores CON AFILIACIONES
 				columnaActual = encuentraIndice(encabezado,
@@ -238,7 +241,6 @@ public class XSVToSCIT {
 
 				cuentaAutores = 0;
 				cadenaAutores = "";
-				cadenaAfiliaciones = "";
 				cuentaAutoresIngresados = 0;
 				cadenaInstituciones = "";
 				auxInstitucion = "";
@@ -458,9 +460,7 @@ public class XSVToSCIT {
 					cadenaInstituciones += "\t";
 				}
 
-				if (cuentaAutoresIngresados > 0) // Si hay autores; si no,
-													// no vale la pena
-													// ingresar el dato
+				if (cuentaAutoresIngresados > 0) // Si hay autores; si no, no vale la pena ingresar el dato
 				{
 					renglonSalida += cadenaAutores;
 					renglonSalida += cadenaInstituciones;
@@ -841,9 +841,7 @@ public class XSVToSCIT {
 
 										Referencias ref = new Referencias();
 										cadenaReferencias = ref
-												.analizaReferencias(cadena,
-														MAX_NUMERO_AUTORES,
-														MAX_NUMERO_PALABRAS);
+												.analizaReferencias(cadena,	MAX_NUMERO_AUTORES,	MAX_NUMERO_PALABRAS);
 									}
 								}
 
@@ -901,6 +899,7 @@ public class XSVToSCIT {
 		areaTexto.append("\n\n\n\n>> Listo para procesar otro archivo.\n\n\n");
 
 		botonSeleccionadorArchivos.setEnabled(true);
+		source.setSelectedIndex(0);
 	}
 
 	/**
@@ -913,15 +912,8 @@ public class XSVToSCIT {
 		int contador = 0;
 		int indice = 0;
 
-		CatalogoPaises catalogoPaises;
-
-		catalogoPaises = new CatalogoPaises();
-
 		String nombreArchivoLimpio = "";
 		String[] nombre_aux;
-
-		String[] autores;
-		String[] referencias;
 
 		indice = archivosOriginales[0].indexOf('.');
 		nombreArchivoLimpio = archivosOriginales[0].substring(0, indice);
@@ -939,28 +931,13 @@ public class XSVToSCIT {
 
 		String cadenaReferencias = "";
 
-		String apellidoA = "";
-		String nombreA = "";
-		String[] autor;
 		String palabra = "";
 		String[] palabras;
 		String nada = "";
-		String tituloAcutal;
-
-		String institucion = "";
-		String pais = "";
-		// int idPais = 0;
-		// int idPaisNoDisponible = 0;
 		int tipo = 0;
 		int columnaActual = 0;
-		int cuentaAutores = 0;
-		// int ultimoGuion = 0;
 		int cuentaPalabras = 0;
 		boolean datosEsenciales = true;
-		boolean banderaCorrespondingAuthor = false;
-		String[] afiliacion;
-		String[] apellidosIngresados;
-		String[] nombresIngresados;
 		String salidaCompleta = "";
 
 		lectura = new LeerArchivoTexto(archivosOriginales_conRuta[0]);
@@ -997,20 +974,8 @@ public class XSVToSCIT {
 		areaTexto.append("\t\t OK!");
 		areaTexto.append("\n\nProcesando información...");
 
-		// int datosInstitucion = 0;
-		int cuentaAutoresIngresados = 0;
 		int cuentaPalabrasIngresadas = 0;
-		boolean banderaAutor = false;
-		int banderaCasoEspecial = 0;
 		String cadenaAutores = "";
-		String cadenaAfiliaciones = "";
-		String[] auxAutor;
-		String[] renglonesReferencias;
-		// String [] afiliacion;
-		String cadenaInstituciones = "";
-		String auxInstitucion = "";
-		int inicio = 0;
-
 		// Imprime encabezado
 		salidaCompleta = "";
 		salidaCompleta += "REF. ORIGINAL COMPLETA" + "\t";
@@ -1035,9 +1000,6 @@ public class XSVToSCIT {
 		salidaCompleta += "PATRON DE REF." + "\t";
 		salidaCompleta += "DESCONOCIDO EN REF." + "\n";
 
-		apellidosIngresados = new String[MAX_NUMERO_AUTORES];
-		nombresIngresados = new String[MAX_NUMERO_AUTORES];
-
 		while (contador < renglones.length) {
 			datosEsenciales = true;
 			entradasSeparadas = renglones[contador].split("\t");
@@ -1045,33 +1007,37 @@ public class XSVToSCIT {
 			if (entradasSeparadas.length >= 40)// Si hay datos suficientes
 												// en el renglón
 			{
-				renglonSalida = "\t";// Como es principal, el campo REF.
-										// ORIGINAL COMPLETA va vacío
-				renglonSalida += "GRRRU\t";// Como es principal, el campo ES
-											// PRINCIPAL lleva una marca
+				
+				if(contador == 1)
+					renglonSalida = sourceName+"\t";
+				else
+					renglonSalida = "\t"; // Como es principal, el campo REF. ORIGINAL COMPLETA va vacío 
+				renglonSalida += "GRRRU\t"; // Como es principal, el campo ES PRINCIPAL lleva una marca
 
 				// Autores CON AFILIACIONES
 				columnaActual = encuentraIndice(encabezado, "C1");
 				entradasSeparadas[columnaActual] = entradasSeparadas[columnaActual].trim();
 							
-				if (columnaActual != -1){
+				if (columnaActual != -1 && !entradasSeparadas[columnaActual].isEmpty()){
 
 					//Eric Gcc
-					String [] resultado = parseC1Wos(entradasSeparadas[columnaActual]);
+					String [] resultado = parseC1Wos(entradasSeparadas[columnaActual],true);
 					cadenaAutores = resultado[0] + resultado[1];
-					cadenaAfiliaciones = resultado[1];
-					//System.out.println(cadenaAutores);
 				}				
-				else
-					autores = nada.split(";");
+				else if (columnaActual != -1){
+					columnaActual = encuentraIndice(encabezado, "AF");
+					entradasSeparadas[columnaActual] = entradasSeparadas[columnaActual].trim();
+					String [] resultado = parseC1Wos(entradasSeparadas[columnaActual],false);
+					cadenaAutores = resultado[0] + resultado[1];
+				} else {
+				}
 
 				// ENCUENTRA EL TITULO DEL DOCUMENTO
 				columnaActual = encuentraIndice(encabezado, "TI");
 				
-				if (columnaActual != -1)
-					tituloAcutal = entradasSeparadas[columnaActual].trim().toUpperCase();
-				else
-					tituloAcutal = nada;
+				if (columnaActual != -1) {
+				} else {
+				}
 
 				if (cadenaAutores.length() > 0) // Si hay autores; si no, no vale la pena ingresar el dato
 				{
@@ -1210,8 +1176,7 @@ public class XSVToSCIT {
 								renglonSalida += tipo + "\t";
 
 								// KEY WORDS (posición 16)
-								columnaActual = encuentraIndice(encabezado,
-										"DE");
+								columnaActual = encuentraIndice(encabezado,"DE");
 
 								if (columnaActual != -1)
 									cadena = entradasSeparadas[columnaActual].toUpperCase();
@@ -1293,7 +1258,7 @@ public class XSVToSCIT {
 								renglonSalida += "SIN CORRESPONDIG" + "\t";
 
 								// ABSTRACT (posición 15)
-								columnaActual = encuentraIndice(encabezado,	"AB");
+								columnaActual = encuentraIndice(encabezado,"AB");
 
 								if (columnaActual != -1)
 									cadena = entradasSeparadas[columnaActual].toUpperCase();
@@ -1414,6 +1379,7 @@ public class XSVToSCIT {
 		areaTexto.append("\n\n\n\n>> Listo para procesar otro archivo.\n\n\n");
 
 		botonSeleccionadorArchivos.setEnabled(true);
+		source.setSelectedIndex(0);
 	}
 
 	/**
@@ -1432,102 +1398,178 @@ public class XSVToSCIT {
 	 *         la cadena de autores y el segundo elemento representa a la cadena
 	 *         de afiliaciones
 	 */
-	public String [] parseC1Wos(String C1){
+	public String [] parseC1Wos(String C1, boolean isC1){
 		int character; 
 		int cuentaAutores;
+		int cuentaAfiliaciones;
 		String [] autores = null;
 		String cadenaAutores = "";
 		String cadenaAfiliaciones = "";
+		CatalogoPaises cp = new CatalogoPaises();
+			
 				
 		Hashtable<String, String> autoresConAfiliacion = new Hashtable<String, String>();
 		CompletarPublicacion pubs = CompletarPublicacion.getInstnacia("ISSN.txt");
 		
-		int beginIndex = 0, endIndexAutores = 0, endIndexAfiliacion = 0;
+		int beginIndex = 0;
 		boolean terminaronAutores = false;
 		cuentaAutores = 0;
+		cuentaAfiliaciones = 0;
 		
-		// Se recorre toda la cadena
-		for(character = 0; character < C1.length(); character++){			
-			// Los corchetes identifican a los autores de una institucion
-			if(C1.charAt(character) == '['){
-				beginIndex = character;
-				terminaronAutores = false;
-			}
-			if(C1.charAt(character) == ']'){						
-				terminaronAutores = true;
-				
-				// Se sapara cada autor
-				autores = C1.substring(beginIndex+1, character).split(";");			
-				
-				// Se le quitan los espaciones y se convierte a mayúscula
-				for(int i = 0; i < autores.length; i++){
-					autores[i] = autores[i].trim().toUpperCase();		
-					autores[i] = autores[i].replace(".", "");
-					autores[i] = autores[i].replace("\'", "");
-					
-					
-					// Para juntar iniciales en el nombre, por ejemplo: DAY, S A => DAY,SA ; SHIN, PAUL J K => SHIN, PAUL JK
-					//Se separa el nombre del autor por apellido y nombre
-					String [] tokensAutor = autores[i].split(",");
-					
-					// Si efectivamente, tiene apellido y nombre
-					if(tokensAutor.length > 1 && tokensAutor[1].length() > 1){// tokens[1] son los nombres
-						String [] auxAutor = tokensAutor[1].split(" ");
-						
-						if(auxAutor.length > 1){
-							String nombre = "";
-							for(int j = 0; j < auxAutor.length; j++){ 
-								
-								if(auxAutor[j].length() > 1){
-									nombre += auxAutor[j] + " ";
-								}else{
-									nombre += auxAutor[j];									
-								}
-							}
-							autores[i] = tokensAutor[0]+","+nombre.trim();
-						}						
-					}
+		if(isC1){
+			// Se recorre toda la cadena
+			for(character = 0; character < C1.length(); character++){			
+				// Los corchetes identifican a los autores de una institucion
+				if(C1.charAt(character) == '['){
+					beginIndex = character;
+					terminaronAutores = false;
 				}
-				for(String autor : autores){					
-					if(!autoresConAfiliacion.containsKey(autor)){
-						//System.out.println(!autoresConAfiliacion.contains(autor.trim()) + " " + autor);
-						autoresConAfiliacion.put(autor, "");
-						cadenaAutores += autor + "\t";
+				if(C1.charAt(character) == ']'){						
+					terminaronAutores = true;
+					
+					// Se sapara cada autor
+					autores = C1.substring(beginIndex+1, character).split(";");			
+					
+					// Se le quitan los espaciones y se convierte a mayúscula
+					for(int i = 0; i < autores.length; i++){
+						autores[i] = autores[i].trim().toUpperCase();		
+						autores[i] = autores[i].replace(".", "");
+						autores[i] = autores[i].replace("\'", "");
+						
+						
+						// Para juntar iniciales en el nombre, por ejemplo: DAY, S A => DAY,SA ; SHIN, PAUL J K => SHIN, PAUL JK
+						//Se separa el nombre del autor por apellido y nombre
+						String [] tokensAutor = autores[i].split(",");
+						
+						// Si efectivamente, tiene apellido y nombre
+						if(tokensAutor.length > 1 && tokensAutor[1].length() > 1){// tokens[1] son los nombres
+							String [] auxAutor = tokensAutor[1].split(" ");
+							
+							if(auxAutor.length > 1){
+								String nombre = "";
+								for(int j = 0; j < auxAutor.length; j++){ 
+									
+									if(auxAutor[j].length() > 1){
+										nombre += auxAutor[j] + " ";
+									}else{
+										nombre += auxAutor[j];									
+									}
+								}
+								autores[i] = tokensAutor[0]+","+nombre.trim();
+							}						
+						}
+					}
+					for(String autor : autores){					
+						if(!autoresConAfiliacion.containsKey(autor)){
+							//System.out.println(!autoresConAfiliacion.contains(autor.trim()) + " " + autor);
+							autoresConAfiliacion.put(autor, "");
+							
+							if(cuentaAutores < MAX_NUMERO_AUTORES){
+								cadenaAutores += autor + "\t";
+								cuentaAutores++;
+							}
+						}
+					}				
+					beginIndex = character+1;			
+				}
+				// El ; separa a los autores de una institucion de los autores de otra
+				if((C1.charAt(character) == ';' && terminaronAutores == true) || character == C1.length()-1){
+					String [] afiliaciones = null;
+					String afiliacion = null;
+					
+					afiliaciones = C1.substring(beginIndex, character+1).trim().split(",");	
+					
+					for(int i = 0; i < afiliaciones.length; i++)
+						afiliaciones[i] = afiliaciones[i].trim().toUpperCase();	
+					
+					afiliaciones[afiliaciones.length-1] = afiliaciones[afiliaciones.length-1].replace(";", "").replaceAll("[0-9]+", "");
+										
+					afiliaciones[afiliaciones.length-1] = cp.validaPais(afiliaciones[afiliaciones.length-1]);
+					
+					/*
+					if(afiliaciones[afiliaciones.length-1].contains("USA"))
+						afiliaciones[afiliaciones.length-1] = "USA";*/
+												
+					
+					afiliacion = pubs.completaISSN(afiliaciones[0]) + "," + afiliaciones[afiliaciones.length-1];				
+						
+					
+					for(String autor : autores){
+						if(autoresConAfiliacion.get(autor).isEmpty()){						
+							autoresConAfiliacion.put(autor, afiliacion.trim());
+							
+							if(cuentaAfiliaciones < MAX_NUMERO_AUTORES){						
+								cadenaAfiliaciones += autoresConAfiliacion.get(autor) + "\t";
+								cuentaAfiliaciones++;
+							}
+						}
+					}
+						
+				}	
+				
+				// Caso especial de un solo autor
+				if(character == 0 && C1.charAt(character) != '['){
+					String [] singleAuthor = null;
+					singleAuthor = C1.trim().split(",");
+					cadenaAutores = singleAuthor[0].trim() + "\t";
+
+					singleAuthor[singleAuthor.length-1] = cp.validaPais(singleAuthor[singleAuthor.length-1]);
+
+					cadenaAfiliaciones = singleAuthor[0].trim()+","+singleAuthor[singleAuthor.length-1].trim() + "\t";	
+					cuentaAutores++;
+					break;
+				}
+			}// Fin for	
+		}// Fin if(isC1)
+		else{
+			// Se sapara cada autor
+			autores = C1.split(";");		
+			
+			for(int i = 0; i < autores.length; i++){
+				autores[i] = autores[i].trim().toUpperCase();		
+				autores[i] = autores[i].replace(".", "");
+				autores[i] = autores[i].replace("\'", "");
+				autores[i] = autores[i].replace("[", "");
+				autores[i] = autores[i].replace("]", "");
+				
+				// Para juntar iniciales en el nombre, por ejemplo: DAY, S A => DAY,SA ; SHIN, PAUL J K => SHIN, PAUL JK
+				//Se separa el nombre del autor por apellido y nombre
+				String [] tokensAutor = autores[i].split(",");
+				
+				// Si efectivamente, tiene apellido y nombre
+				if(tokensAutor.length > 1 && tokensAutor[1].length() > 1){// tokens[1] son los nombres
+					String [] auxAutor = tokensAutor[1].split(" ");
+					
+					if(auxAutor.length > 1){
+						String nombre = "";
+						for(int j = 0; j < auxAutor.length; j++){ 
+							
+							if(auxAutor[j].length() > 1){
+								nombre += auxAutor[j] + " ";
+							}else{
+								nombre += auxAutor[j];									
+							}
+						}
+						autores[i] = tokensAutor[0]+","+nombre.trim();
+					}						
+				}
+			}
+			for(String autor : autores){					
+				if(!autoresConAfiliacion.containsKey(autor)){
+					//System.out.println(!autoresConAfiliacion.contains(autor.trim()) + " " + autor);
+					autoresConAfiliacion.put(autor, "");
+					
+					if(cuentaAutores < MAX_NUMERO_AUTORES){
+						cadenaAutores += autor + "\t";						
+						cadenaAfiliaciones += "\t";
+						//cadenaAfiliaciones += "NO DISPONIBLE,NO DISPONIBLE\t";
 						cuentaAutores++;
 					}
-				}				
-				beginIndex = character+1;			
+				}			
 			}
-			// El ; separa a los autores de una institucion de los autores de otra
-			if((C1.charAt(character) == ';' && terminaronAutores == true) || character == C1.length()-1){
-				String [] afiliaciones = null;
-				String afiliacion = null;
-				
-				afiliaciones = C1.substring(beginIndex, character+1).trim().split(",");	
-				
-				for(int i = 0; i < afiliaciones.length; i++)
-					afiliaciones[i] = afiliaciones[i].trim().toUpperCase();	
-				
-				afiliaciones[afiliaciones.length-1] = afiliaciones[afiliaciones.length-1].replace(";", "").replaceAll("[0-9]+", "");
-				
-				if(afiliaciones[afiliaciones.length-1].contains("USA"))
-					afiliaciones[afiliaciones.length-1] = "USA";
-											
-				
-				afiliacion = pubs.completaISSN(afiliaciones[0]) + "," + afiliaciones[afiliaciones.length-1];				
-					
-				
-				for(String autor : autores){
-					if(autoresConAfiliacion.get(autor).isEmpty()){
-						autoresConAfiliacion.put(autor, afiliacion.trim());
-						cadenaAfiliaciones += autoresConAfiliacion.get(autor) + "\t";	
-					}
-				}
-					
-			}	
-		}// Fin for	
+		}	
 		
-				
+		
 		for (int i = cuentaAutores; i < MAX_NUMERO_AUTORES; i++) {
 			cadenaAutores += "\t";
 			cadenaAfiliaciones += "\t";
@@ -1760,11 +1802,8 @@ public class XSVToSCIT {
 		areaBotonSeleccionadorArchivos.add(etiquetaVacia2);
 
 		JPanel areaBotones = new JPanel();
-		areaBotones.setLayout(new GridLayout(1, 2, 5, 0)); // El cinco es la
-															// separacion
-															// horizontal entre
-															// los controles
-
+		areaBotones.setLayout(new GridLayout(1, 2, 5, 0)); // El cinco es la separacion horizontal entre los controles		
+		
 		botonSeleccionadorArchivos = new JButton(" Seleccionar archivos ");
 		botonIniciar = new JButton("Iniciar");
 
@@ -1773,9 +1812,16 @@ public class XSVToSCIT {
 
 		areaBotonSeleccionadorArchivos
 				.add(areaBotones, BorderLayout.PAGE_START);
-
-		wos = new JCheckBox("Procesar como archivo WOS", false);
-		areaBotonSeleccionadorArchivos.add(wos, BorderLayout.PAGE_END);
+		
+		JPanel areaCombo = new JPanel();
+		areaCombo.setLayout(new GridLayout(2, 1, 5, 0));
+		
+		JLabel etiqueta = new JLabel("Selecciona una fuente");
+		source = new JComboBox<String>(new String[]{"","Scopus","Web Of Science", "Otros"});
+		//wos = new JCheckBox("Procesar como archivo WOS", false);
+		areaCombo.add(etiqueta);
+		areaCombo.add(source);
+		areaBotonSeleccionadorArchivos.add(areaCombo, BorderLayout.PAGE_END);		
 
 		JLabel etiquetaVacia000 = new JLabel(" ");
 		areaBotonSeleccionadorArchivos.add(etiquetaVacia000);
@@ -1835,13 +1881,13 @@ public class XSVToSCIT {
 	// Generador y ejecutor del elemento gráfico
 	public XSVToSCIT() {
 		JFrame.setDefaultLookAndFeelDecorated(true);
-		JFrame ventana = new JFrame("IDABI");
+		JFrame ventana = new JFrame("SCIT - Importador");
 		JPanel areaBotonSelecionaArchivos = creaAreaBotonSelecionaArchivos();
 
 		ventana.setLayout(new FlowLayout());
 		ventana.add(areaBotonSelecionaArchivos);
 		ventana.setSize(500, 400);
-		ventana.setTitle("IDABI");
+		ventana.setTitle("SCIT - Importador");
 		ventana.setLocation(30, 30);
 		ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		ventana.setVisible(true); // Permitimos su visualización una vez que se
@@ -1854,11 +1900,13 @@ public class XSVToSCIT {
 				botonSeleccionadorArchivos.setEnabled(false);
 				SeleccionadorArchivosGrafico seleccionador = new SeleccionadorArchivosGrafico(
 						"Archivos provenientes de Scopus/WOS (*.csv)",
-						new String[] { "csv", "txt" }); // Archivos con
-														// extensión csv y txt
+						new String[] { "csv", "txt" }); // Archivos con extensión csv y txt
 				archivosOriginales = seleccionador.getArchivosSeleccionados();
-				archivosOriginales_conRuta = seleccionador
-						.getArchivosSeleccionados_ruta();
+				archivosOriginales_conRuta = seleccionador.getArchivosSeleccionados_ruta();
+				
+				if(archivosOriginales.length <= 0)
+					botonSeleccionadorArchivos.setEnabled(true);
+					
 			}
 		});
 
@@ -1869,7 +1917,7 @@ public class XSVToSCIT {
 
 				if (archivosOriginales.length > 0)
 					new Thread(new thread1()).start();
-				
+				else
 					botonSeleccionadorArchivos.setEnabled(true);
 			}
 		});
@@ -2060,5 +2108,4 @@ public class XSVToSCIT {
 
 		return cadena;
 	}
-
 }// public class XVSToSCIT
