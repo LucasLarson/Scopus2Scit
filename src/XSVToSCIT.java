@@ -9,7 +9,6 @@
  *
  * @author Hernández Domínguez Laura Elena
  * @version 1.0 (5/Diciembre/2012)
-
  */
 
 import javax.swing.*;
@@ -1625,7 +1624,7 @@ public class XSVToSCIT {
 		cadena = cadena.replaceAll("PROC. OF CONF.", " ");
 		cadena = cadena.replaceAll("PROC.", " ");
 
-		cadena = cadena.replaceAll("[0-9]+(\\s)?(RD|TH|ND)", " ");
+		cadena = cadena.replaceAll("[0-9]+(\\s)?(RD|TH|ND|ST)", " ");
 
 		/*
 		 * cadena = cadena.replaceAll("(\\s)?(PROCEEDINGS OF (THE )?)"," ");

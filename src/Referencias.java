@@ -1,3 +1,6 @@
+import java.util.Calendar;
+import java.util.TimeZone;
+
 /**	
  * @(#)Referencias.java
  *
@@ -55,15 +58,12 @@ public class Referencias
 		String volumen="";
 		String numero="";
 		String aux="";
-		String editorial="";
 		String tipo="";
 		String resto="";
 		String caso="";
 		int bandera=0;
 		boolean no_poner=false;			
 		int indice=0, indice2=0;
-		boolean confiable=false;
-		
 		tipo = "1";
 		
 		for(int i=0; i<MAX_NUMERO_AUTORES; i++)
@@ -87,6 +87,7 @@ public class Referencias
 				
 					autores[p]=partes[p];
 				}
+				
 				p++;
 			}
 			if( p!=0 ) //Contiene autores
@@ -119,12 +120,17 @@ public class Referencias
 						{
 							if( datos[d].contains( "UNIVERSITY" ) || datos[d].contains( "SOCIETY" ) || datos[d].contains( "INSTITUTE" ) || datos[d].contains( "PRESS" ) || datos[d].contains( "INST." ) || datos[d].contains( "UNIV." ) || datos[d].contains( "CENTER" ) || datos[d].contains( "PUBLISHING" ) )
 							{
-								editorial = datos[d].trim();
+								datos[d].trim();
 							}
 							
 							if( datos[d].contains( "BULLETIN" ) || datos[d].contains( "JOURNAL" ) || datos[d].contains( "CONFERENCE" ) || datos[d].contains( "CONF." ) || datos[d].contains( "JOUR." ) || datos[d].contains( "BULL." ) )
 							{
-								publicacion = datos[d].trim();
+								if(datos[d].trim().length() > 5)
+									publicacion = datos[d].trim();
+								else if(datos[d].trim().matches("^[0-9]+$"))
+									publicacion = "NO DISPONIBLE";
+								else
+									publicacion = "NO DISPONIBLE";
 							}
 						}
 						
@@ -182,7 +188,13 @@ public class Referencias
 							{
 								//confiable=true;
 								caso=caso+"Pub_";
-								publicacion = resto.substring(0,indice);
+								if(resto.substring(0,indice).trim().length() < 15 && (resto.substring(0,indice).trim().contains("P.") || resto.substring(0,indice).trim().contains("PP.")))
+									publicacion = "NO DISPONIBLE";
+								else if(resto.substring(0,indice).trim().matches("^[0-9]+$"))
+									publicacion = "NO DISPONIBLE";
+								else
+									publicacion = resto.substring(0,indice).trim();
+									
 								resto = resto.substring(indice+2);
 								
 								indice = resto.indexOf(',');
@@ -198,8 +210,19 @@ public class Referencias
 										//Se cuenta con el número de la publicación
 										indice2 = aux.indexOf(')');
 										volumen = aux.substring(0,indice);
-										if( indice2 != -1 )
-											numero = aux.substring(indice+1,indice2);
+										
+										/**
+										 * @author EGarciaCanoCa (24/Octubre/2013)
+										 */
+										try{
+											if( indice2 != -1 ){
+												numero = aux.substring(indice+1,indice2);
+											}
+										}catch(Exception e){					
+											// No se pudo procesar el numero
+											numero = "";
+											System.out.println(referencia);
+										}
 										caso=caso+"Num_(Vol)_";
 									}//if( indice!=-1 )
 									else
@@ -266,17 +289,18 @@ public class Referencias
 							{
 								if( datos[d].contains( "UNIVERSITY" ) || datos[d].contains( "SOCIETY" ) || datos[d].contains( "INSTITUTE" ) || datos[d].contains( "PRESS" ) || datos[d].contains( "INST." ) || datos[d].contains( "UNIV." ) || datos[d].contains( "CENTER" ) || datos[d].contains( "PUBLISHING" ) )
 								{
-									editorial = datos[d].trim();
+									datos[d].trim();
 								}
 								
 								if( datos[d].contains( "BULLETIN" ) || datos[d].contains( "JOURNAL" ) || datos[d].contains( "CONFERENCE" ) || datos[d].contains( "CONF." ) || datos[d].contains( "JOUR." ) || datos[d].contains( "BULL." ) )
 								{
-									publicacion = datos[d].trim();
+									if(datos[d].trim().length() > 5)
+										publicacion = datos[d].trim();									
+									else
+										publicacion =  "NO DISPONIBLE";
 								}
 							}
-							
 						}
-						
 					}// if anios
 					else
 					{
@@ -299,7 +323,6 @@ public class Referencias
 					caso="NA_?";
 				}
 			}
-			
 			
 			//	-> ELEGIR EL TIPO DE PUBLICACION CON PALABRAS CLAVE: 
 			
@@ -351,6 +374,28 @@ public class Referencias
 				//No es principal
 				salida+=" \t";
 
+				
+				for(int i=0; i< autores.length; i++){
+					
+					if(autores[i].contains("(") && autores[i].contains(")")){
+						
+						int begin = autores[i].indexOf("(");
+						int end = autores[i].indexOf(")");
+						
+						if(end > begin){
+							try{
+								autores[i] = autores[i].substring(end+1);
+							}catch(ArrayIndexOutOfBoundsException aioobe){							
+								autores[i] = "";
+							}							
+						}
+					}
+					
+					autores[i] = autores[i].replaceAll("[0-9]", "");
+					autores[i] = autores[i].replaceAll("[()]", "");
+					System.out.println(autores[i]);
+				}
+				
 				for(int i=0; i<MAX_NUMERO_AUTORES; i++)
 					salida+=autores[i]+"\t";
 					
@@ -364,7 +409,22 @@ public class Referencias
 				 */
 				pubs = CompletarPublicacion.getInstnacia("ISSN.txt");
 				publicacion = pubs.completaISSN(publicacion);
-
+				
+				publicacion = limpiarPublicacion(publicacion);
+				
+				if(anio.length() == 4){
+					try{
+						int auxAnio = Integer.parseInt(anio);
+						Calendar localCalendar = Calendar.getInstance(TimeZone.getDefault());
+						int currentYear = localCalendar.get(Calendar.YEAR);
+						
+						if(auxAnio < 1850 || auxAnio > currentYear)
+							anio = "";
+					}catch(NumberFormatException nfe){
+						anio = "";
+					}
+				}else
+					anio = "";				
 				
 				salida += titulo+"\t";
 				salida += anio+"\t";
@@ -385,34 +445,103 @@ public class Referencias
 				salida += "\t"+caso;
 				
 				// DESCONOCIDO EN REF
-				salida += "\t"+resto;
-				
+				salida += "\t"+resto;		
 			}
-			
-			/*
-			if( confiable )
-			{
-				// soloReferencias= "\tOriginal\tAutor 1\tAutor 2\tAutor 3\tAutor 4\tAautor 5\tTítulo\tAño\tPublicación\tVolumen\tNúmero\tEditorial\tTipo\tCaso";
-				
-				salida += "\n"+referencia+"\t";
-				for(int i=0; i<5; i++)
-					salida+=autores[i]+"\t";
-				
-				salida += titulo+"\t";
-				salida += anio+"\t";
-				salida += publicacion+"\t";
-				salida += volumen+"\t";
-				salida += numero+"\t";
-				salida += editorial+"\t";
-				salida += tipo+"\t";
-
-				salida += "\t"+caso;
-				salida += "\n";
-			}
-			*/
 		
 		return salida;
 	}// public void decodificaReferencia( String referencia)
 
+	public String limpiarPublicacion(String cadena){
+		
+		if(cadena.matches("^[0-9]+$"))
+			cadena = "NO DISPONIBLE";
+		
+		cadena = cadena.replaceAll("[0-9]+(\\s)?(RD|TH|ND|ST)", " ");
+		
+		cadena = cadena.replaceAll(
+				"FIRST |SECOND |THIRD |FOURTH |FIFTH |SIXTH |SEVENTH |EIGHTH |NINTH |TENTH |ELEVENTH |TWELFTH |THIRTEENTH |FOURTEENTH |FIFTEENTH |SIXTEENTH |SEVENTEENTH |EIGHTEENTH |NINETEENTH |TWENTIETH ",
+				" ");
+		
+		cadena = cadena.replaceAll(
+				"(,? ?VOLS? \\d\\d? ?(&|AND|,)? ?\\d\\d? ?,?)", " ");
+		cadena = cadena.replaceAll(
+				",? ?VOL \\d\\d?\\d? ?,? ?(\\d\\d?\\d?([^A-Z]|$))?,?", " ");
+
+		// Números romanos
+		cadena = cadena
+				.replaceAll(
+						"(,? ?VOLS? III ?(&|AND|,)? ?IV ?,?)|(,? ?VOLS? II ?(&|AND|,)? ?III ?,?)|(,? ?VOLS? IV ?(&|AND|,)? ?V ?,?)|(,? ?VOLS? IX ?(&|AND|,)? ?X ?,?)|(,? ?VOLS? VIII ?(&|AND|,)? ?IX ?,?)|(,? ?VOLS? VII ?(&|AND|,)? ?VIII ?,?)|(,? ?VOLS? VI ?(&|AND|,)? ?VII ?,?)|(,? ?VOLS? V ?(&|AND|,)? ?VI ?,?)|(,? ?VOLS? I ?(&|AND|,)? ?II ?,?)",
+						" ");
+		cadena = cadena
+				.replaceAll(
+						"(,? ?VOL III ?,?)|(,? ?VOL II ?,?)|(,? ?VOL IV ?,?)|(,? ?VOL IX ?,?)|(,? ?VOL VIII ?,?)|(,? ?VOL VII ?,?)|(,? ?VOL VI ?,?)|(,? ?VOL V ?,?)|(,? ?VOL X ?,?)|(,? ?VOL I ?,?)",
+						" ");
+
+		// Quitamos valores como PART 1, PT I PARTS 1&2, etc:
+		// letra
+		cadena = cadena
+				.replaceAll(
+						"(,? ?(PARTS?|PTS?) A ?(&|AND|,)? ?B ?,?)|(,? ?(PARTS?|PTS?) B ?(&|AND|,)? ?C ?,?)|(,? ?(PARTS?|PTS?) C ?(&|AND|,)? ?D ?,?)|(,? ?(PARTS?|PTS?) D ?(&|AND|,)? ?E ?,?)|(,? ?(PARTS?|PTS?) E ?(&|AND|,)? ?F ?,?)|(,? ?(PARTS?|PTS?) F ?(&|AND|,)? ?G ?,?)|(,? ?(PARTS?|PTS?) G ?(&|AND|,)? ?H ?,?)|(,? ?(PARTS?|PTS?) H ?(&|AND|,)? ?I ?,?)|(,? ?(PARTS?|PTS?) I ?(&|AND|,)? ?J ?,?)",
+						" ");
+		cadena = cadena
+				.replaceAll(
+						"(,? ?(PART|PT) A ?,?)|(,? ?(PART|PT) B ?,?)|(,? ?(PART|PT) C ?,?)|(,? ?(PART|PT) D ?,?)|(,? ?(PART|PT) E ?,?)|(,? ?(PART|PT) F ?,?)|(,? ?(PART|PT) G ?,?)|(,? ?(PART|PT) H ?,?)|(,? ?(PART|PT) I ?,?)|(,? ?(PART|PT) J ?,?)",
+						" ");
+
+		// números romanos
+		cadena = cadena
+				.replaceAll(
+						"(,? ?(PARTS?|PTS?) III ?(&|AND|,)? ?IV ?,?)|(,? ?(PARTS?|PTS?) II ?(&|AND|,)? ?III ?,?)|(,? ?(PARTS?|PTS?) IV ?(&|AND|,)? ?V ?,?)|(,? ?(PARTS?|PTS?) IX ?(&|AND|,)? ?X ?,?)|(,? ?(PARTS?|PTS?) VIII ?(&|AND|,)? ?IX ?,?)|(,? ?(PARTS?|PTS?) VII ?(&|AND|,)? ?VIII ?,?)|(,? ?(PARTS?|PTS?) VI ?(&|AND|,)? ?VII ?,?)|(,? ?(PARTS?|PTS?) V ?(&|AND|,)? ?VI ?,?)|(,? ?(PARTS?|PTS?) I ?(&|AND|,)? ?II ?,?)",
+						" ");
+		cadena = cadena
+				.replaceAll(
+						"(,? ?(PART|PT) III ?,?)|(,? ?(PART|PT) II ?,?)|(,? ?(PART|PT) IV ?,?)|(,? ?(PART|PT) IX ?,?)|(,? ?(PART|PT) VIII ?,?)|(,? ?(PART|PT) VII ?,?)|(,? ?(PART|PT) VI ?,?)|(,? ?(PART|PT) V ?,?)|(,? ?(PART|PT) X ?,?)|(,? ?(PART|PT) I ?,?)",
+						" ");
+
+		// Números arábigos
+		cadena = cadena.replaceAll(
+				"(,? ?(PARTS?|PTS?) \\d\\d? ?(&|AND|,)? ?\\d\\d? ?,?)", " ");
+		cadena = cadena.replaceAll(",? ?(PART|PT) \\d\\d?\\d? ?,?", " ");
+
+		// QUITAMOS Números Romanos I-XX
+		cadena = cadena
+				.replaceAll(
+						"[^A-Z0-9]III[^A-Z0-9]|[^A-Z0-9]II[^A-Z0-9]|[^A-Z0-9]IV[^A-Z0-9]|[^A-Z0-9]IX[^A-Z0-9]|[^A-Z0-9]VIII[^A-Z0-9]|[^A-Z0-9]VII[^A-Z0-9]|[^A-Z0-9]VI[^A-Z0-9]|[^A-Z0-9]V[^A-Z0-9]|[^A-Z0-9]XIII[^A-Z0-9]|[^A-Z0-9]XII[^A-Z0-9]|[^A-Z0-9]XIV[^A-Z0-9]|[^A-Z0-9]XIX[^A-Z0-9]|[^A-Z0-9]XVIII[^A-Z0-9]|[^A-Z0-9]XVII[^A-Z0-9]|[^A-Z0-9]XVI[^A-Z0-9]|[^A-Z0-9]XV[^A-Z0-9]|[^A-Z0-9]XX[^A-Z0-9]|[^A-Z0-9]XI[^A-Z0-9]|[^A-Z0-9]X[^A-Z0-9]|[^A-Z0-9]I[^A-Z0-9]",
+						" ");
+		cadena = cadena
+				.replaceAll(
+						"^III[^A-Z0-9]|^II[^A-Z0-9]|^IV[^A-Z0-9]|^IX[^A-Z0-9]|^VIII[^A-Z0-9]|^VII[^A-Z0-9]|^VI[^A-Z0-9]|^V[^A-Z0-9]|^XIII[^A-Z0-9]|^XII[^A-Z0-9]|^XIV[^A-Z0-9]|^XIX[^A-Z0-9]|^XVIII[^A-Z0-9]|^XVII[^A-Z0-9]|^XVI[^A-Z0-9]|^XV[^A-Z0-9]|^XX[^A-Z0-9]|^XI[^A-Z0-9]|^X[^A-Z0-9]|^I[^A-Z0-9]",
+						" ");
+
+		// Quitamos años:
+		cadena = cadena
+				.replaceAll(
+						"\\((2000|2001|2002|2003|2004|2005|2006|2007|2008|2009|2010|2011|2012|2013|2014|2015)\\)",
+						" ");
+		cadena = cadena
+				.replaceAll(
+						"^?[^A-Z0-9\\(]?(2000|2001|2002|2003|2004|2005|2006|2007|2008|2009|2010|2011|2012|2013|2014|2015)[^A-Z0-9\\)]?$?",
+						" ");
+
+		// Quitamos posibles dobles espacios:
+		cadena = cadena.replaceAll("  ", " ");
+		cadena = cadena.replaceAll("  ", " ");
+		cadena = cadena.replaceAll("  ", " ");
+
+		// Quitamos espacios extra al inicio o final:
+		cadena = cadena.trim();
+
+		// Quitamos la ABREVIATURA al final del tipo: CONFERENCIA (CONF 09)
+		cadena = cadena.concat("FINDENOMBRECONF");
+		// System.out.println(cadena);
+		cadena = cadena.replaceAll(
+				"\\(([A-Z0-9])+ ?(\\d\\d)?\\)FINDENOMBRECONF", " ");
+		cadena = cadena.replaceAll("FINDENOMBRECONF", " ");
+
+		// Quitamos espacios extra al inicio o final:
+		cadena = cadena.trim();
+	
+		return cadena;
+	}
 	
 }// public class Referencia

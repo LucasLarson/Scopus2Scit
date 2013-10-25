@@ -1,10 +1,6 @@
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.util.Hashtable;
 
@@ -101,8 +97,6 @@ public class CompletarPublicacion {
 	 * @return El nombre de la publicación completado a partir de la lista ISSN.
 	 */	
 	public String completaISSN(String publicacion) {
-		String linea = "";
-		String[] abbr;
 		String[] tokens;
 
 		// Se quitan todos los puntos del nombre de la publicacion

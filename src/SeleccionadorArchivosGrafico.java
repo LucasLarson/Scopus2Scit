@@ -10,7 +10,6 @@
  */
 
 import javax.swing.*;
-import javax.swing.JFileChooser.*;
 import javax.swing.filechooser.*;
 import java.io.File;
 

@@ -14,7 +14,6 @@ public class ConvierteCvsATab
 
 	public  ConvierteCvsATab( String nombreArchivoConRuta, String rutaResultado )
 	{
-		String archivoEnCadena;
 		LeerArchivoTexto lectura;
 		String cadenaArchivo = "";
 		String [] renglones;
