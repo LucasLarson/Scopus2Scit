@@ -121,8 +121,8 @@ public class XSVToSCIT {
 		String[] nombresIngresados;
 
 		areaTexto.setText("");
-		progressBar.setValue(0);
-		areaTexto.append("Cambiando Formato a Separación por Tabuladores...");
+		progressBar.setValue(10);
+		areaTexto.append("Separando por Tabuladores...");
 
 		new ConvierteCvsATab(
 				archivosOriginales_conRuta[0], "Salidas\\Scopus\\SalidasTABS");
@@ -134,14 +134,14 @@ public class XSVToSCIT {
 
 		// lectura = new LeerArchivoTexto( archivosOriginales_conRuta[0] );
 		cadenaArchivo = lectura.getArchivoEnCadena();
-		progressBar.setValue(10);
-
+		progressBar.setValue(25);
+		areaTexto.append(" OK!");
 		areaTexto.append("\nLimpiando texto...");		
 		
 		cadenaArchivo = quitaCaracteresEspeciales(cadenaArchivo);
 		cadenaArchivo = cadenaArchivo.toUpperCase();
 
-		progressBar.setValue(15);
+		progressBar.setValue(50);
 		areaTexto.append(" OK!");
 		areaTexto.append("\nAcomodando columnas recorridas...");
 
@@ -151,10 +151,14 @@ public class XSVToSCIT {
 		/*******/
 
 		// Crea la carpeta de resultados
-		File folder2;
-		String ruta_resultados2 = "Salidas\\Scopus\\";
-		folder2 = new File(ruta_resultados2);
-		folder2.mkdirs();
+		File folder;
+		String ruta_resultados = "Salidas\\Scopus\\";
+		folder = new File(ruta_resultados);
+		folder.mkdirs();
+				
+		String ruta_rep_institcuiones = "Salidas\\Scopus\\ReporteInstituciones\\";
+		folder = new File(ruta_rep_institcuiones);
+		folder.mkdirs();
 
 		// cadena =
 		// "Autores\tTítulo\tAño\tPublicación\tVolumen\tNúmero\tInstitución\tPaísCódigo\tPaísNombre\tKeyWords\tTipo\n";
@@ -174,7 +178,7 @@ public class XSVToSCIT {
 
 		contador = 1; // la primera línea es el encabezado
 
-		progressBar.setValue(20);
+		progressBar.setValue(75);
 		areaTexto.append(" OK!");
 		areaTexto.append("\n\nProcesando información...");
 
@@ -324,14 +328,7 @@ public class XSVToSCIT {
 
 						if ((nombreA.length() + apellidoA.length()) > 0
 								&& (!nombreA.matches(".*[0-9].*") && !apellidoA
-										.matches(".*[0-9].*"))) // Si no es
-																// un nombre
-																// sin
-																// sentido
-																// (sólo
-																// apellido
-																// o nombre
-																// o vacío)
+										.matches(".*[0-9].*"))) // Si no es un nombre sin sentido (sólo apellido o nombre o vacío)
 						{
 							// Juntamos el nombre del autor con su apellido
 							cadenaAutores += apellidoA + "," + nombreA + "\t";
@@ -359,7 +356,7 @@ public class XSVToSCIT {
 					}
 
 					new EscribirEnArchivoTexto("@" + Integer.toString(cycles++)
-							+ "{", "Salidas\\Scopus\\" + nombreArchivoLimpio
+							+ "{", "Salidas\\Scopus\\ReporteInstituciones\\" + nombreArchivoLimpio
 							+ "_INTITUCIONES.LOG");
 					if (banderaAutor)// Si se ingresó al autor, ahora
 										// ingreso su institución
@@ -372,16 +369,13 @@ public class XSVToSCIT {
 									"SIN INFORMACION DE LA FUENTE >>> "
 											+ apellidoA + "," + nombreA
 											+ " >>> " + tituloAcutal,
-									"Salidas\\Scopus\\" + nombreArchivoLimpio
+									"Salidas\\Scopus\\ReporteInstituciones\\" + nombreArchivoLimpio
 											+ "_INTITUCIONES.LOG");
 						}
 
 						else {
 							inicio = 2;
-							if (banderaCasoEspecial == 1) // La institución
-															// comienza a
-															// partir de la
-															// primera coma
+							if (banderaCasoEspecial == 1) // La institución comienza a partir de la primera coma
 								inicio = 1;
 
 							auxInstitucion = "";
@@ -391,17 +385,14 @@ public class XSVToSCIT {
 								auxInstitucion += autor[inst];
 							}
 
-							if (inicio >= autor.length) {// No hay
-															// institución
-															// para este
-															// autor
+							if (inicio >= autor.length) {// No hay institución para este autor
 								cadenaInstituciones += "NO DISPONIBLE, NO DISPONIBLE"
 										+ "\t";
 								new EscribirEnArchivoTexto(
 										"SIN INFORMACION DE LA FUENTE >>> "
 												+ apellidoA + "," + nombreA
 												+ " >>> " + tituloAcutal,
-										"Salidas\\Scopus\\"
+										"Salidas\\Scopus\\ReporteInstituciones\\"
 												+ nombreArchivoLimpio
 												+ "_INTITUCIONES.LOG");
 							} else {
@@ -414,6 +405,9 @@ public class XSVToSCIT {
 									institucion = afiliacion[0].trim(); // Institución
 									pais = afiliacion[1].trim(); // País
 									pais = catalogoPaises.validaPais(pais);
+									
+									if(institucion.compareTo("UNIVERSIDAD NACIONAL AUTONOMA DE MEXICO") == 0)
+										pais = "MEXICO";
 
 									if (institucion.compareTo("NO DISPONIBLE") == 0
 											&& pais.compareTo("NO DISPONIBLE") != 0) {
@@ -429,7 +423,7 @@ public class XSVToSCIT {
 														+ apellidoA + ","
 														+ nombreA + " >>> "
 														+ tituloAcutal,
-												"Salidas\\Scopus\\"
+												"Salidas\\Scopus\\ReporteInstituciones\\"
 														+ nombreArchivoLimpio
 														+ "_INTITUCIONES.LOG");
 									}
@@ -442,7 +436,7 @@ public class XSVToSCIT {
 									new EscribirEnArchivoTexto(auxInstitucion
 											+ " >>> " + apellidoA + ","
 											+ nombreA + " >>> " + tituloAcutal,
-											"Salidas\\Scopus\\"
+											"Salidas\\Scopus\\ReporteInstituciones\\"
 													+ nombreArchivoLimpio
 													+ "_INTITUCIONES.LOG");
 								}
@@ -450,7 +444,7 @@ public class XSVToSCIT {
 						}
 					}
 					cuentaAutores++;
-					new EscribirEnArchivoTexto("}", "Salidas\\Scopus\\"
+					new EscribirEnArchivoTexto("}", "Salidas\\Scopus\\ReporteInstituciones\\"
 							+ nombreArchivoLimpio + "_INTITUCIONES.LOG");
 				}
 
@@ -875,12 +869,11 @@ public class XSVToSCIT {
 		areaTexto.append("\t OK!");
 		areaTexto.append("\n\nEscribiendo en archivos...");
 
-		// Crea la carpeta de resultados
-		File folder;
-		String ruta_resultados = "Salidas\\Scopus\\";
+		// Crea la carpeta de resultados		
+		String ruta_resultados2 = "Salidas\\Scopus\\";
 		folder = new File(ruta_resultados);
 		folder.mkdirs();
-
+				
 		// cadena =
 		// "Autores\tTítulo\tAño\tPublicación\tVolumen\tNúmero\tInstitución\tPaísCódigo\tPaísNombre\tKeyWords\tTipo\n";
 		cadena = "";
@@ -1360,7 +1353,6 @@ public class XSVToSCIT {
 		String ruta_resultados = "Salidas\\WOS\\";
 		folder = new File(ruta_resultados);
 		folder.mkdirs();
-
 		// cadena =
 		// "Autores\tTítulo\tAño\tPublicación\tVolumen\tNúmero\tInstitución\tPaísCódigo\tPaísNombre\tKeyWords\tTipo\n";
 		cadena = "";

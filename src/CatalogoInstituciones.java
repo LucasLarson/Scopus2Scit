@@ -235,7 +235,7 @@ public class CatalogoInstituciones
 			
 			if( afiliacion.compareTo("*")==0 ){
 				afiliacion="NO DISPONIBLE";
-				new EscribirEnArchivoTexto(afiliacionCompleta,"Salidas\\Scopus\\"+nombreArchivoLimpio+"_INTITUCIONES.LOG");
+				new EscribirEnArchivoTexto(afiliacionCompleta,"Salidas\\Scopus\\ReporteInstituciones\\"+nombreArchivoLimpio+"_INTITUCIONES.LOG");
 			}
 			//Agrego el país, que es lo último que se menciona -si se menciona-:
 			if( datos.length>1 )
@@ -243,7 +243,7 @@ public class CatalogoInstituciones
 			
 			return afiliacion;
 		}
-		new EscribirEnArchivoTexto(afiliacionCompleta,"Salidas\\Scopus\\"+nombreArchivoLimpio+"_INTITUCIONES.LOG");
+		new EscribirEnArchivoTexto(afiliacionCompleta,"Salidas\\Scopus\\ReporteInstituciones\\"+nombreArchivoLimpio+"_INTITUCIONES.LOG");
 		return "NO DISPONIBLE";
 	}//extraeAfiliacion
 	
@@ -1700,8 +1700,10 @@ public class CatalogoInstituciones
 					return "COMISION FEDERAL DE ELECTRICIDAD";
 			
 			
-			if( (afiliacion.contains("CATALONIA") || afiliacion.contains("CATALUN") ) && (afiliacion.contains("POLYTEC")||afiliacion.contains("POLITEC")) && afiliacion.contains("UNIV") ) // Cataluña, Catalunya, Catalonia
+			if( (afiliacion.contains("CATALONIA") || afiliacion.contains("CATALUN") || afiliacion.contains("CATALUNYA")) && (afiliacion.contains("POLYTEC")||afiliacion.contains("POLITEC")) && (afiliacion.contains("UNIV") || afiliacion.contains("UNIVERSITAT") )) // Cataluña, Catalunya, Catalonia
 					return "POLYTECHNIC UNIVERSITY OF CATALONIA";
+			if(afiliacion.compareTo("UNIVERSITAT POLITENICA DE CATALUNYA") == 0)
+				return "POLYTECHNIC UNIVERSITY OF CATALONIA"; 
 			if( (afiliacion.contains("CATALONIA") || afiliacion.contains("CATALUN") ) && afiliacion.contains("TEC") && afiliacion.contains("UNIV") ) // Cataluña, Catalunya, Catalonia
 					return "TECHNICAL UNIVERSITY OF CATALONIA";
 					

@@ -392,8 +392,7 @@ public class Referencias
 					}
 					
 					autores[i] = autores[i].replaceAll("[0-9]", "");
-					autores[i] = autores[i].replaceAll("[()]", "");
-					System.out.println(autores[i]);
+					autores[i] = autores[i].replaceAll("[()]", "");					
 				}
 				
 				for(int i=0; i<MAX_NUMERO_AUTORES; i++)
