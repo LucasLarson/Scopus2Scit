@@ -1,3 +1,5 @@
+import javax.swing.JTextArea;
+
 /**	
  * @(#)AcomodaTABScopus.java
  *
@@ -15,7 +17,7 @@ public class AcomodaTABScopus
 	private String [] renglones;
 	private String salidaCorrecta = "";
 
-	public AcomodaTABScopus( String cadenaArchivo )
+	public AcomodaTABScopus( String cadenaArchivo, JTextArea areaTexto )
 	{
 		int contador=0;
 		int columnaActual=0;
@@ -46,6 +48,10 @@ public class AcomodaTABScopus
 
 		while( contador<renglones.length )
 		{
+			
+			areaTexto.setText("Acomodando columnas recorridas...\n");
+			areaTexto.append(renglones[contador]);
+			
 			renglon="";
 			entradasSeparadas = renglones[contador].split("\t");
 

@@ -1,43 +1,15 @@
-import java.awt.BorderLayout;
 import java.awt.EventQueue;
-
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 import javax.swing.JButton;
-
-import java.awt.FlowLayout;
-
-import javax.swing.BoxLayout;
-
-import net.miginfocom.swing.MigLayout;
-
-import java.awt.GridLayout;
-import java.awt.GridBagLayout;
-import java.awt.GridBagConstraints;
-
 import javax.swing.JLabel;
-import javax.swing.JTextField;
-
 import java.awt.Font;
-
-import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
-import javax.swing.SwingConstants;
 import javax.swing.SpringLayout;
-
 import java.awt.Color;
-
 import javax.swing.JTextArea;
-
-//import XSVToSCIT.thread1;
-
-
-
-
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -48,14 +20,9 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.io.*;
-import java.util.regex.*;
-import java.util.*;
-
 
 public class XSVToSCIT extends JFrame {
-	
-	
+		
 	private String[] archivosOriginales;
 	private String[] archivosOriginales_conRuta;
 	private JProgressBar progressBar;
@@ -63,7 +30,6 @@ public class XSVToSCIT extends JFrame {
 	private JButton botonSeleccionadorArchivos;
 	private JButton botonIniciar;
 	private JComboBox<String> source;
-	private JTextField txtPublicacionHomolodaga;
 	
 	String pubHomologada = "";
 	int cycles = 1;
@@ -72,6 +38,8 @@ public class XSVToSCIT extends JFrame {
 	private final int MAX_NUMERO_AUTORES = 8;
 	private final int MAX_NUMERO_PALABRAS = 6;
 	private String sourceName = "";
+	private JLabel lblCurrentFile;
+	private JComboBox<String> cmbPublicacionHomolodaga;
 	
 	/**
 	 * Launch the application.
@@ -111,14 +79,13 @@ public class XSVToSCIT extends JFrame {
 		}
 	/**
 	 * Este método realiza el procesamiento del archivo de entrada considerando
-	 * que proviene de Scopus. Es el comportamiento por defecto del programa.
+	 * que proviene de Scopus.
 	 * 
 	 * @author EGarciaCanoCa (17/Octubre/2013)
 	 * */
 	public void fromScopus() {
 		int contador = 0;
 		int indice = 0;
-		// int cycles = 1;
 
 		CatalogoPaises catalogoPaises;
 
@@ -167,11 +134,13 @@ public class XSVToSCIT extends JFrame {
 		String[] nombresIngresados;
 
 		areaTexto.setText("");
+		lblCurrentFile.setText(lblCurrentFile.getText() + " "  + nombreArchivoLimpio);
+		lblCurrentFile.setVisible(true);
 		progressBar.setValue(10);
-		areaTexto.append("Separando por Tabuladores...");
+		
+		/*areaTexto.append("Separando por Tabuladores...");*/
 
-		new ConvierteCvsATab(
-				archivosOriginales_conRuta[0], "Salidas\\Scopus\\SalidasTABS");
+		new ConvierteCvsATab(archivosOriginales_conRuta[0], "Salidas\\Scopus\\SalidasTABS", areaTexto);
 
 		lectura = new LeerArchivoTexto("Salidas\\Scopus\\SalidasTABS\\"
 				+ nombreArchivoLimpio + ".txt");
@@ -180,21 +149,19 @@ public class XSVToSCIT extends JFrame {
 
 		// lectura = new LeerArchivoTexto( archivosOriginales_conRuta[0] );
 		cadenaArchivo = lectura.getArchivoEnCadena();
-		progressBar.setValue(25);
-		areaTexto.append(" OK!");
-		areaTexto.append("\nLimpiando texto...");		
+		progressBar.setValue(25);		
+		
+		areaTexto.setText("Limpiando texto\n");
+		areaTexto.append("\tEsto puede llevar unos minutos ");
 		
 		cadenaArchivo = quitaCaracteresEspeciales(cadenaArchivo);
 		cadenaArchivo = cadenaArchivo.toUpperCase();
 
 		progressBar.setValue(50);
-		areaTexto.append(" OK!");
-		areaTexto.append("\nAcomodando columnas recorridas...");
-
-		AcomodaTABScopus acomodaTABScopus = new AcomodaTABScopus(cadenaArchivo);
+		
+		AcomodaTABScopus acomodaTABScopus = new AcomodaTABScopus(cadenaArchivo, areaTexto);
 		cadenaArchivo = acomodaTABScopus.getSalidaCorrecta();
-
-		/*******/
+		
 
 		// Crea la carpeta de resultados
 		File folder;
@@ -206,15 +173,9 @@ public class XSVToSCIT extends JFrame {
 		folder = new File(ruta_rep_institcuiones);
 		folder.mkdirs();
 
-		// cadena =
-		// "Autores\tTítulo\tAño\tPublicación\tVolumen\tNúmero\tInstitución\tPaísCódigo\tPaísNombre\tKeyWords\tTipo\n";
-		// cadenaArchivo="";
-		// cadena += salidaCompleta;
 		new EscribirEnArchivoTexto(cadenaArchivo,
 				"Salidas\\Scopus\\SalidasTABS" + "\\" + nombreArchivoLimpio
 						+ "_TABSBIEN.txt");
-
-		/*******/
 
 		renglones = cadenaArchivo.split("\n");
 
@@ -225,8 +186,7 @@ public class XSVToSCIT extends JFrame {
 		contador = 1; // la primera línea es el encabezado
 
 		progressBar.setValue(75);
-		areaTexto.append(" OK!");
-		areaTexto.append("\n\nProcesando información...");
+		areaTexto.setText("Acomodando columnas recorridas... OK!");	
 
 		int cuentaAutoresIngresados = 0;
 		int cuentaPalabrasIngresadas = 0;
@@ -267,6 +227,9 @@ public class XSVToSCIT extends JFrame {
 		nombresIngresados = new String[MAX_NUMERO_AUTORES];
 
 		while (contador < renglones.length) {
+			areaTexto.setText("Procesando información...\n");
+			areaTexto.append(renglones[contador]);
+			
 			datosEsenciales = true;
 			entradasSeparadas = renglones[contador].split("\t");
 			if (entradasSeparadas.length >= 40)// Si hay datos suficientes en el renglón
@@ -283,6 +246,7 @@ public class XSVToSCIT extends JFrame {
 				entradasSeparadas[columnaActual] = entradasSeparadas[columnaActual]
 						.trim();
 
+				// Cada ; hay un autor con su afiliación
 				if (columnaActual != -1)
 					autores = entradasSeparadas[columnaActual].split(";");
 				else
@@ -407,8 +371,7 @@ public class XSVToSCIT extends JFrame {
 					if (banderaAutor)// Si se ingresó al autor, ahora
 										// ingreso su institución
 					{
-						if (banderaCasoEspecial == 2) { // No hay
-														// institución
+						if (banderaCasoEspecial == 2) { // No hay institución
 							cadenaInstituciones += "NO DISPONIBLE, NO DISPONIBLE"
 									+ "\t";
 							new EscribirEnArchivoTexto(
@@ -936,12 +899,18 @@ public class XSVToSCIT extends JFrame {
 		progressBar.setValue(100);
 		progressBar.repaint();
 
-		areaTexto.append("\t OK!");
-		areaTexto.append("\n\n\n\n>> Listo para procesar otro archivo.\n\n\n");
+		areaTexto.setText("Separando por Tabuladores... OK!");	
+		areaTexto.append("\nLimpiando texto... OK!");
+		areaTexto.append("\nAcomodando columnas recorridas... OK!");
+		areaTexto.append("\nProcesando información... OK!");
+		
+		areaTexto.append("\n\n>> Listo para procesar otro archivo.\n\n\n");
 
 		botonSeleccionadorArchivos.setEnabled(true);
 		botonIniciar.setEnabled(true);
 		source.setSelectedIndex(0);
+		lblCurrentFile.setText("Archivo actual: ");
+		lblCurrentFile.setVisible(false);
 	}
 	
 	/**
@@ -989,8 +958,11 @@ public class XSVToSCIT extends JFrame {
 		cadenaArchivo = lectura.getArchivoEnCadena();
 
 		progressBar.setValue(0);
-
-		areaTexto.append("\nLimpiando texto...");
+		lblCurrentFile.setText(lblCurrentFile.getText() + " "  + nombreArchivoLimpio);
+		lblCurrentFile.setVisible(true);
+		
+		areaTexto.setText("Limpiando texto\n");
+		areaTexto.append("\tEsto puede llevar unos minutos ");
 
 		cadenaArchivo = quitaCaracteresEspeciales(cadenaArchivo);
 		cadenaArchivo = cadenaArchivo.toUpperCase();
@@ -1013,8 +985,6 @@ public class XSVToSCIT extends JFrame {
 		contador = 1; // la primera línea es el encabezado
 
 		progressBar.setValue(20);
-		areaTexto.append("\t\t OK!");
-		areaTexto.append("\n\nProcesando información...");
 
 		int cuentaPalabrasIngresadas = 0;
 		String cadenaAutores = "";
@@ -1043,6 +1013,9 @@ public class XSVToSCIT extends JFrame {
 		salidaCompleta += "DESCONOCIDO EN REF." + "\n";
 
 		while (contador < renglones.length) {
+			areaTexto.setText("Procesando información...\n");
+			areaTexto.append(renglones[contador]);
+			
 			datosEsenciales = true;
 			entradasSeparadas = renglones[contador].split("\t");
 
@@ -1356,16 +1329,20 @@ public class XSVToSCIT extends JFrame {
 
 		// System.out.println( ruta_resultados + "\\" + nombreArchivoLimpio
 		// + "_ingreso_BD.txt" );
-
+		
 		progressBar.setValue(100);
 		progressBar.repaint();
-
-		areaTexto.append("\t OK!");
-		areaTexto.append("\n\n\n\n>> Listo para procesar otro archivo.\n\n\n");
+			
+		areaTexto.append("\nLimpiando texto... OK!");
+		areaTexto.append("\nProcesando información... OK!");
+		
+		areaTexto.append("\n\n>> Listo para procesar otro archivo.\n\n\n");
 
 		botonSeleccionadorArchivos.setEnabled(true);
 		botonIniciar.setEnabled(true);
 		source.setSelectedIndex(0);
+		lblCurrentFile.setText("Archivo actual: ");
+		lblCurrentFile.setVisible(false);
 	}
 
 	/**
@@ -1708,14 +1685,7 @@ public class XSVToSCIT extends JFrame {
 
 		// Quitamos espacios extra al inicio o final:
 		cadena = cadena.trim();
-		// System.out.println("\t>>>"+cadena);
-		/*
-		 * String testea=
-		 * "OMAE 2008 PROCEEDINGS OF THE 27TH INTERNATIONAL CONFERENCE ON OFFSHORE MECHANICS AND ARCTIC ENGINEERING 2008, VOL 2"
-		 * ; testea=testea.replaceAll(
-		 * "(\\dST|\\d\\dST|\\d\\d\\dST|\\dNd|\\d\\dNd|\\d\\d\\dNd|\\dRd|\\d\\dRd|\\d\\d\\dRd|\\dTH|\\d\\dTH|\\d\\d\\dTH) "
-		 * ,""); System.out.println(testea);
-		 */
+
 		return cadena;
 	}
 	
@@ -1769,7 +1739,7 @@ public class XSVToSCIT extends JFrame {
 		getContentPane().setBackground(new Color(51, 51, 51));
 		setTitle("SCIT - Importador");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 458, 594);
+		setBounds(100, 100, 458, 537);
 		SpringLayout springLayout = new SpringLayout();
 		getContentPane().setLayout(springLayout);
 		
@@ -1834,32 +1804,37 @@ public class XSVToSCIT extends JFrame {
 		lblPublicacinHomologada.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 		getContentPane().add(lblPublicacinHomologada);
 		
-		txtPublicacionHomolodaga = new JTextField();
-		txtPublicacionHomolodaga.setForeground(Color.WHITE);
-		springLayout.putConstraint(SpringLayout.NORTH, txtPublicacionHomolodaga, 6, SpringLayout.SOUTH, lblPublicacinHomologada);
-		springLayout.putConstraint(SpringLayout.WEST, txtPublicacionHomolodaga, 24, SpringLayout.WEST, getContentPane());
-		springLayout.putConstraint(SpringLayout.SOUTH, txtPublicacionHomolodaga, 34, SpringLayout.SOUTH, lblPublicacinHomologada);
-		springLayout.putConstraint(SpringLayout.EAST, txtPublicacionHomolodaga, -21, SpringLayout.EAST, getContentPane());
-		txtPublicacionHomolodaga.setBackground(new Color(51, 51, 51));
-		getContentPane().add(txtPublicacionHomolodaga);
-		txtPublicacionHomolodaga.setColumns(10);
-		
 		progressBar = new JProgressBar(0,100);
+		springLayout.putConstraint(SpringLayout.WEST, progressBar, 0, SpringLayout.WEST, botonSeleccionadorArchivos);
+		springLayout.putConstraint(SpringLayout.EAST, progressBar, 0, SpringLayout.EAST, botonIniciar);
 		progressBar.setFont(new Font("Tahoma", Font.BOLD, 11));
 		progressBar.setValue(0);
 		progressBar.setStringPainted(true);
-		springLayout.putConstraint(SpringLayout.NORTH, progressBar, 18, SpringLayout.SOUTH, txtPublicacionHomolodaga);
-		springLayout.putConstraint(SpringLayout.WEST, progressBar, 0, SpringLayout.WEST, botonSeleccionadorArchivos);
-		springLayout.putConstraint(SpringLayout.EAST, progressBar, 0, SpringLayout.EAST, botonIniciar);
 		getContentPane().add(progressBar);
 		
 		areaTexto = new JTextArea();
-		springLayout.putConstraint(SpringLayout.NORTH, areaTexto, 342, SpringLayout.NORTH, getContentPane());
+		springLayout.putConstraint(SpringLayout.SOUTH, progressBar, -18, SpringLayout.NORTH, areaTexto);
+		springLayout.putConstraint(SpringLayout.NORTH, areaTexto, 371, SpringLayout.NORTH, getContentPane());
 		springLayout.putConstraint(SpringLayout.SOUTH, areaTexto, -10, SpringLayout.SOUTH, getContentPane());
-		springLayout.putConstraint(SpringLayout.SOUTH, progressBar, -15, SpringLayout.NORTH, areaTexto);
 		springLayout.putConstraint(SpringLayout.WEST, areaTexto, 0, SpringLayout.WEST, botonSeleccionadorArchivos);
 		springLayout.putConstraint(SpringLayout.EAST, areaTexto, -21, SpringLayout.EAST, getContentPane());
 		getContentPane().add(areaTexto);
+		
+		lblCurrentFile = new JLabel("Archivo Actual: ");
+		springLayout.putConstraint(SpringLayout.SOUTH, lblCurrentFile, -185, SpringLayout.SOUTH, getContentPane());
+		springLayout.putConstraint(SpringLayout.NORTH, progressBar, 6, SpringLayout.SOUTH, lblCurrentFile);
+		lblCurrentFile.setVisible(false);
+		springLayout.putConstraint(SpringLayout.WEST, lblCurrentFile, 0, SpringLayout.WEST, botonSeleccionadorArchivos);
+		lblCurrentFile.setForeground(Color.WHITE);
+		lblCurrentFile.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		getContentPane().add(lblCurrentFile);
+		
+		cmbPublicacionHomolodaga = new JComboBox<String>();
+		springLayout.putConstraint(SpringLayout.NORTH, cmbPublicacionHomolodaga, 6, SpringLayout.SOUTH, lblPublicacinHomologada);
+		springLayout.putConstraint(SpringLayout.WEST, cmbPublicacionHomolodaga, 0, SpringLayout.WEST, botonSeleccionadorArchivos);
+		springLayout.putConstraint(SpringLayout.SOUTH, cmbPublicacionHomolodaga, 29, SpringLayout.SOUTH, lblPublicacinHomologada);
+		springLayout.putConstraint(SpringLayout.EAST, cmbPublicacionHomolodaga, -21, SpringLayout.EAST, getContentPane());
+		getContentPane().add(cmbPublicacionHomolodaga);
 		
 
 		// Agregar funcionalidad al botón Iniciar
@@ -1883,7 +1858,7 @@ public class XSVToSCIT extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
 				
-				pubHomologada = txtPublicacionHomolodaga.getText().trim().toUpperCase();
+				pubHomologada = cmbPublicacionHomolodaga.getSelectedItem().toString().toUpperCase();						
 
 				if (archivosOriginales.length > 0){
 					botonIniciar.setEnabled(false);					
@@ -1898,7 +1873,9 @@ public class XSVToSCIT extends JFrame {
 	}
 	
 	public String quitaCaracteresEspeciales(String cadena) {
-
+		
+		areaTexto.append(". ");
+		
 		// Quita guiones
 		cadena = Pattern.compile("-").matcher(cadena).replaceAll(" ");
 
@@ -1911,9 +1888,12 @@ public class XSVToSCIT extends JFrame {
 
 		// Quita espacios múltiples
 		cadena = Pattern.compile(" {2,}").matcher(cadena).replaceAll(" ");
-
+		
+		areaTexto.append(". ");
+		
 		// Quita caracteres especiales
-		cadena = cadena.replace("Á", "A"); // Á
+		cadena = cadena.replace("\u00C1", "A"); // Á
+		cadena = cadena.replace("\u00E1", "A"); // á
 		cadena = cadena.replace("\u00c2\u00a1", ""); // ¡
 		cadena = cadena.replace("\u00c2\u00a5", "Y"); // ¥
 		cadena = cadena.replace("\u00c2\u00a9", ""); // ©
@@ -1923,6 +1903,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00c2\u00b7", "."); // ·
 		cadena = cadena.replace("\u00c2\u00bf", "");// ¿
 		cadena = cadena.replace("\u00c3\u00a0", "a");// à
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00c3\u00a1", "a");// á
 		cadena = cadena.replace("\u00c3\u00a2", "a");// â
 		cadena = cadena.replace("\u00c3\u00a3", "a");// ã
@@ -1934,6 +1915,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00c3\u00a9", "e");// é
 		cadena = cadena.replace("\u00c3\u00aa", "e");// ê
 		cadena = cadena.replace("\u00c3\u00ab", "e");// ë
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00c3\u00ac", "i");// ì
 		cadena = cadena.replace("\u00c3\u00ad", "i");// í
 		cadena = cadena.replace("\u00c3\u00ae", "i");// î
@@ -1945,6 +1927,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00c3\u00b4", "o");// ô
 		cadena = cadena.replace("\u00c3\u00b5", "o");// õ
 		cadena = cadena.replace("\u00c3\u00b6", "o");// ö
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00c3\u00b8", "o");// ø
 		cadena = cadena.replace("\u00c3\u00b9", "u");// ù
 		cadena = cadena.replace("\u00c3\u00ba", "u");// ú
@@ -1958,6 +1941,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00c3\u0160", "E");// Ê
 		cadena = cadena.replace("\u00c3\u0161", "U");// Ú
 		cadena = cadena.replace("\u00c3\u0178", "B");// ß
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00c3\u017d", "I");// Î
 		cadena = cadena.replace("\u00c3\u017e", "");// Þ
 		cadena = cadena.replace("\u00c3\u0192", "A");// Ã
@@ -1971,6 +1955,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00c3\u201c", "O");// Ó
 		cadena = cadena.replace("\u00c3\u201d", "O");// Ô
 		cadena = cadena.replace("\u00c3\u201e", "A");// Ä, c??
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00c3\u2020", "AE");// Æ
 		cadena = cadena.replace("\u00c3\u2021", "C");// Ç
 		cadena = cadena.replace("\u00c3\u2022", "O");// Õ
@@ -1982,6 +1967,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00c3\u2122", "U");// Ù
 		cadena = cadena.replace("\u00c3\ufffd", "I");// Ý, Ï, Í,Ð
 		cadena = cadena.replace("\u00c4\u00ab", "i"); // i??
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00c4\u00b0", "I"); // I??
 		cadena = cadena.replace("\u00c4\u00ba", "l"); // l??
 		cadena = cadena.replace("\u00c4\u0152", "C"); // C??
@@ -1997,6 +1983,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00c5\u00be", "z"); // ž
 		cadena = cadena.replace("\u00c5\u0178", "s");// s?
 		cadena = cadena.replace("\u00c5\u017e", "S");// S
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00c5\u2019", "OE");// Œ
 		cadena = cadena.replace("\u00c5\u201a", "l"); // l??
 		cadena = cadena.replace("\u00c5\u201c", "oe");// œ
@@ -2013,6 +2000,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00c8\u00a9", "e");// ?
 		cadena = cadena.replace("\u00cc\u0192", "4"); // 4??
 		cadena = cadena.replace("\u00cc\u02c6", ""); // ¨
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00cc\u20ac", "a"); // a??
 		cadena = cadena.replace("\u00cc\ufffd", "n");// ´n
 		cadena = cadena.replace("\u00ce\u00a0", "PI");// ?
@@ -2028,6 +2016,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00ce\u00b2", "beta");// ß
 		cadena = cadena.replace("\u00ce\u00b3", "gamma");// ?
 		cadena = cadena.replace("\u00ce\u00b4", "delta");// delta
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00ce\u00b5", "epsilon");// e
 		cadena = cadena.replace("\u00ce\u00b6", "dseta");// ?
 		cadena = cadena.replace("\u00ce\u00b7", "eta");// ?
@@ -2044,6 +2033,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00ce\u0178", "OMICRON");// ?
 		cadena = cadena.replace("\u00ce\u017e", "XI");// ?
 		cadena = cadena.replace("\u00ce\u02dc", "THETA");// T
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00ce\u2013", "DSETA");// ?
 		cadena = cadena.replace("\u00ce\u2014", "ETA");// ?
 		cadena = cadena.replace("\u00ce\u2018", "ALFA");// ?
@@ -2062,6 +2052,7 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00cf\u2021", "ji");// ?
 		cadena = cadena.replace("\u00cf\u2026", "ipsilon");// ?
 		cadena = cadena.replace("\u00cf\u2030", "omega");// ?
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00cf\u20ac", "pi");// p
 		cadena = cadena.replace("\u00cf\ufffd", "rho");// ?
 		cadena = cadena.replace("\u00e1\u00b8\u00be", "M"); // M??
@@ -2075,10 +2066,11 @@ public class XSVToSCIT extends JFrame {
 		cadena = cadena.replace("\u00e2\u2030\u00a4", ""); // (menor/igual)
 		cadena = cadena.replace("\u00e2\u2030\u00a5", ""); // (mayor/igual)
 		cadena = cadena.replace("\u00e2\u20ac\u00a2", ""); // •
+		areaTexto.append(". ");
 		cadena = cadena.replace("\u00e2\u20ac\u00b2", "");// '
 		cadena = cadena.replace("\u00e3\u20ac\u02c6", "<");// <
-		cadena = cadena.replace("\u00e3\u20ac\u2030", ">");// >
+		cadena = cadena.replace("\u00e3\u20ac\u2030", ">");// >	
 
 		return cadena;
 	}
-}// public class XVSToSCIT
+}// public class XSVToSCIT

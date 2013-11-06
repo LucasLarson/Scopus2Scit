@@ -9,10 +9,12 @@
 
  import java.io.*;
 
+import javax.swing.JTextArea;
+
 public class ConvierteCvsATab
 {
 
-	public  ConvierteCvsATab( String nombreArchivoConRuta, String rutaResultado )
+	public  ConvierteCvsATab( String nombreArchivoConRuta, String rutaResultado, JTextArea areaTexto )
 	{
 		LeerArchivoTexto lectura;
 		String cadenaArchivo = "";
@@ -39,6 +41,10 @@ public class ConvierteCvsATab
 		
 		while( contador<renglones.length )
 		{
+			// Se limpian el area de texto
+			areaTexto.setText("Separando por Tabuladores...\n");
+			areaTexto.append(renglones[contador]);
+			
 			cadena="";
 			bandera=false;
 			renglones[contador] = renglones[contador].replace("\t","");
@@ -85,14 +91,13 @@ public class ConvierteCvsATab
 		File folder;
 		folder = new File( rutaResultado+ "\\" );
 		folder.mkdirs();
-		new EscribirEnArchivoTexto( cadenaSalida, rutaResultado + "\\" + nombreArchivoLimpio + ".txt" );
-		
+		new EscribirEnArchivoTexto( cadenaSalida, rutaResultado + "\\" + nombreArchivoLimpio + ".txt" );			
 	}
-	
+	/*
 	public static void main( String[] args )
 	{
 		new ConvierteCvsATab( "C:\\Users\\LHernandezD\\Dropbox\\Java\\ProyectoLEI\\Decodificadores2\\Entradas\\scopus.csv", "SalidasTABS" );
-	}
+	}*/
 	
 }// class ConvierteCvsATab
  
