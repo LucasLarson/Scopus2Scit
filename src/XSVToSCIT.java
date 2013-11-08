@@ -13,13 +13,22 @@ import javax.swing.JTextArea;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JMenu;
 
 public class XSVToSCIT extends JFrame {
 		
@@ -30,6 +39,8 @@ public class XSVToSCIT extends JFrame {
 	private JButton botonSeleccionadorArchivos;
 	private JButton botonIniciar;
 	private JComboBox<String> source;
+	private String catalogoPublicaciones;
+
 	
 	String pubHomologada = "";
 	int cycles = 1;
@@ -40,11 +51,14 @@ public class XSVToSCIT extends JFrame {
 	private String sourceName = "";
 	private JLabel lblCurrentFile;
 	private JComboBox<String> cmbPublicacionHomolodaga;
+	private JMenuItem menuItemSeleccionar;
+	private JMenuItem menuItemRecargar;
 	
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+				
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -134,7 +148,7 @@ public class XSVToSCIT extends JFrame {
 		String[] nombresIngresados;
 
 		areaTexto.setText("");
-		lblCurrentFile.setText(lblCurrentFile.getText() + " "  + nombreArchivoLimpio);
+		lblCurrentFile.setText("Archivo actual: " + " "  + nombreArchivoLimpio);
 		lblCurrentFile.setVisible(true);
 		progressBar.setValue(10);
 		
@@ -243,9 +257,15 @@ public class XSVToSCIT extends JFrame {
 				// Autores CON AFILIACIONES
 				columnaActual = encuentraIndice(encabezado,
 						"AUTHORS WITH AFFILIATIONS");
+				
+				try{
 				entradasSeparadas[columnaActual] = entradasSeparadas[columnaActual]
 						.trim();
-
+				}catch(ArrayIndexOutOfBoundsException aioobe){
+					JOptionPane.showMessageDialog(null,"Algo salió mal. Parece que el archivo no está en el formato correcto.");	
+					return;
+				}
+				
 				// Cada ; hay un autor con su afiliación
 				if (columnaActual != -1)
 					autores = entradasSeparadas[columnaActual].split(";");
@@ -910,7 +930,10 @@ public class XSVToSCIT extends JFrame {
 		botonIniciar.setEnabled(true);
 		source.setSelectedIndex(0);
 		lblCurrentFile.setText("Archivo actual: ");
-		lblCurrentFile.setVisible(false);
+		//lblCurrentFile.setVisible(false);
+		cmbPublicacionHomolodaga.setSelectedIndex(-1);
+		cmbPublicacionHomolodaga.setEnabled(true);
+		source.setEnabled(true);
 	}
 	
 	/**
@@ -958,7 +981,7 @@ public class XSVToSCIT extends JFrame {
 		cadenaArchivo = lectura.getArchivoEnCadena();
 
 		progressBar.setValue(0);
-		lblCurrentFile.setText(lblCurrentFile.getText() + " "  + nombreArchivoLimpio);
+		lblCurrentFile.setText("Archivo actual: " + " "  + nombreArchivoLimpio);
 		lblCurrentFile.setVisible(true);
 		
 		areaTexto.setText("Limpiando texto\n");
@@ -1333,7 +1356,7 @@ public class XSVToSCIT extends JFrame {
 		progressBar.setValue(100);
 		progressBar.repaint();
 			
-		areaTexto.append("\nLimpiando texto... OK!");
+		areaTexto.setText("\nLimpiando texto... OK!");
 		areaTexto.append("\nProcesando información... OK!");
 		
 		areaTexto.append("\n\n>> Listo para procesar otro archivo.\n\n\n");
@@ -1342,7 +1365,10 @@ public class XSVToSCIT extends JFrame {
 		botonIniciar.setEnabled(true);
 		source.setSelectedIndex(0);
 		lblCurrentFile.setText("Archivo actual: ");
-		lblCurrentFile.setVisible(false);
+		//lblCurrentFile.setVisible(false);
+		cmbPublicacionHomolodaga.setSelectedIndex(-1);
+		cmbPublicacionHomolodaga.setEnabled(true);
+		source.setEnabled(true);
 	}
 
 	/**
@@ -1729,11 +1755,70 @@ public class XSVToSCIT extends JFrame {
 	}// String ordenaFrecuencias( Hashtable frecuencias, int frecTotal )
 
 
+	/**
+	 * @author EGarciaCanoCa
+	 */
+	public void populatePubs(){
+		BufferedReader input = null;
+		
+		try {
+			input = new BufferedReader(new FileReader(catalogoPublicaciones));
+			ArrayList<String> lineas = new ArrayList<String>();
+			
+			String linea = "";
+			
+			while (( linea = input.readLine()) != null){
+			    if(!linea.trim().isEmpty())			
+			    	lineas.add(linea.trim());			    
+			}	
+			
+			cmbPublicacionHomolodaga.setModel(new DefaultComboBoxModel<String>(lineas.toArray(new String[]{})));
+			cmbPublicacionHomolodaga.setSelectedIndex(-1);
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			int dialogResult = JOptionPane.showConfirmDialog(null, "El catalogo de publicaciones homologadas por defecto no se puede encontrar. ¿Desea seleccionar uno ahora?","Advertencia", 2);
+			if(dialogResult == JOptionPane.YES_OPTION){
+				seleccionarCatalogo();
+				populatePubs();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			
+			int dialogResult = JOptionPane.showConfirmDialog(null, "El catalogo de publicaciones homologadas por defecto no se puede leer. ¿Desea seleccionar uno ahora?","Advertencia", 2);
+			if(dialogResult == JOptionPane.YES_OPTION){
+				seleccionarCatalogo();
+				populatePubs();
+			}
+		} finally{
+			try {
+				if(input != null)
+					input.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}	
+	}
+	
+	/**
+	 * @author EGarciaCanoCa
+	 * Abrea la ventana para seleccionar un archivo del sistema operativo.
+	 */
+	public void seleccionarCatalogo(){
+		SeleccionadorArchivosGrafico seleccionadorCatalogo = new SeleccionadorArchivosGrafico(
+				"Catalogos de publicaciones (*.txt)", "txt"); // Archivos con extensión csv y txt				
+		try{
+			catalogoPublicaciones = seleccionadorCatalogo.getArchivosSeleccionados_ruta()[0];
+		}catch(ArrayIndexOutOfBoundsException aioobe){ }
+		//JOptionPane.showMessageDialog(null,catalogoPublicaciones);	
+	}
 	
 	/**
 	 * Create the frame.
 	 */
-	public XSVToSCIT() {
+	public XSVToSCIT() {		
+			
 		setResizable(false);
 		setAutoRequestFocus(false);
 		getContentPane().setBackground(new Color(51, 51, 51));
@@ -1750,36 +1835,35 @@ public class XSVToSCIT extends JFrame {
 		getContentPane().add(botonSeleccionadorArchivos);
 		
 		botonIniciar = new JButton("Iniciar");
-		springLayout.putConstraint(SpringLayout.WEST, botonIniciar, 38, SpringLayout.EAST, botonSeleccionadorArchivos);
-		springLayout.putConstraint(SpringLayout.EAST, botonIniciar, -21, SpringLayout.EAST, getContentPane());
+		springLayout.putConstraint(SpringLayout.EAST, botonSeleccionadorArchivos, -38, SpringLayout.WEST, botonIniciar);
+		springLayout.putConstraint(SpringLayout.NORTH, botonIniciar, 0, SpringLayout.NORTH, botonSeleccionadorArchivos);
+		springLayout.putConstraint(SpringLayout.WEST, botonIniciar, 238, SpringLayout.WEST, getContentPane());
 		botonIniciar.setForeground(Color.WHITE);
 		botonIniciar.setBackground(new Color(51, 51, 51));
 		getContentPane().add(botonIniciar);
 		
 		JLabel lblNewLabel = new JLabel("SCIT");
-		springLayout.putConstraint(SpringLayout.NORTH, lblNewLabel, 10, SpringLayout.NORTH, getContentPane());
 		springLayout.putConstraint(SpringLayout.WEST, lblNewLabel, 24, SpringLayout.WEST, getContentPane());
 		lblNewLabel.setForeground(Color.WHITE);
 		lblNewLabel.setFont(new Font("Segoe UI", Font.BOLD, 30));
 		getContentPane().add(lblNewLabel);
 		
 		JLabel lblNewLabel_1 = new JLabel("Importador de documentos");
-		springLayout.putConstraint(SpringLayout.EAST, botonSeleccionadorArchivos, -7, SpringLayout.EAST, lblNewLabel_1);
-		springLayout.putConstraint(SpringLayout.NORTH, lblNewLabel_1, 11, SpringLayout.SOUTH, lblNewLabel);
 		springLayout.putConstraint(SpringLayout.WEST, lblNewLabel_1, 24, SpringLayout.WEST, getContentPane());
+		springLayout.putConstraint(SpringLayout.SOUTH, lblNewLabel_1, -413, SpringLayout.SOUTH, getContentPane());
 		lblNewLabel_1.setForeground(Color.WHITE);
 		lblNewLabel_1.setFont(new Font("Segoe UI", Font.PLAIN, 15));
 		getContentPane().add(lblNewLabel_1);
 		
-		JLabel lblVersion = new JLabel("1.8.3.1311rc");
+		JLabel lblVersion = new JLabel("1.9.0.1311rc");
 		springLayout.putConstraint(SpringLayout.NORTH, lblVersion, 6, SpringLayout.SOUTH, lblNewLabel_1);
-		springLayout.putConstraint(SpringLayout.WEST, lblVersion, 0, SpringLayout.WEST, botonSeleccionadorArchivos);
+		springLayout.putConstraint(SpringLayout.WEST, lblVersion, 24, SpringLayout.WEST, getContentPane());
 		lblVersion.setForeground(Color.GRAY);
 		lblVersion.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 		getContentPane().add(lblVersion);
 		
 		JLabel lblSeleccionarFuente = new JLabel("Seleccionar fuente");
-		springLayout.putConstraint(SpringLayout.SOUTH, botonSeleccionadorArchivos, -21, SpringLayout.NORTH, lblSeleccionarFuente);
+		springLayout.putConstraint(SpringLayout.SOUTH, botonSeleccionadorArchivos, -6, SpringLayout.NORTH, lblSeleccionarFuente);
 		springLayout.putConstraint(SpringLayout.WEST, lblSeleccionarFuente, 24, SpringLayout.WEST, getContentPane());
 		springLayout.putConstraint(SpringLayout.NORTH, lblSeleccionarFuente, 170, SpringLayout.NORTH, getContentPane());
 		lblSeleccionarFuente.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -1787,9 +1871,9 @@ public class XSVToSCIT extends JFrame {
 		getContentPane().add(lblSeleccionarFuente);
 		
 		source = new JComboBox();
+		springLayout.putConstraint(SpringLayout.EAST, botonIniciar, 0, SpringLayout.EAST, source);
 		source.setForeground(Color.BLACK);
 		source.setBackground(SystemColor.menu);
-		springLayout.putConstraint(SpringLayout.SOUTH, botonIniciar, -47, SpringLayout.NORTH, source);
 		springLayout.putConstraint(SpringLayout.WEST, source, 24, SpringLayout.WEST, getContentPane());
 		springLayout.putConstraint(SpringLayout.EAST, source, -21, SpringLayout.EAST, getContentPane());
 		springLayout.putConstraint(SpringLayout.NORTH, source, 6, SpringLayout.SOUTH, lblSeleccionarFuente);
@@ -1805,51 +1889,87 @@ public class XSVToSCIT extends JFrame {
 		getContentPane().add(lblPublicacinHomologada);
 		
 		progressBar = new JProgressBar(0,100);
-		springLayout.putConstraint(SpringLayout.WEST, progressBar, 0, SpringLayout.WEST, botonSeleccionadorArchivos);
-		springLayout.putConstraint(SpringLayout.EAST, progressBar, 0, SpringLayout.EAST, botonIniciar);
+		springLayout.putConstraint(SpringLayout.WEST, progressBar, 24, SpringLayout.WEST, getContentPane());
+		springLayout.putConstraint(SpringLayout.EAST, progressBar, -21, SpringLayout.EAST, getContentPane());
 		progressBar.setFont(new Font("Tahoma", Font.BOLD, 11));
 		progressBar.setValue(0);
 		progressBar.setStringPainted(true);
 		getContentPane().add(progressBar);
 		
 		areaTexto = new JTextArea();
+		springLayout.putConstraint(SpringLayout.WEST, areaTexto, 24, SpringLayout.WEST, getContentPane());
+		springLayout.putConstraint(SpringLayout.EAST, areaTexto, -21, SpringLayout.EAST, getContentPane());
 		springLayout.putConstraint(SpringLayout.SOUTH, progressBar, -18, SpringLayout.NORTH, areaTexto);
 		springLayout.putConstraint(SpringLayout.NORTH, areaTexto, 371, SpringLayout.NORTH, getContentPane());
 		springLayout.putConstraint(SpringLayout.SOUTH, areaTexto, -10, SpringLayout.SOUTH, getContentPane());
-		springLayout.putConstraint(SpringLayout.WEST, areaTexto, 0, SpringLayout.WEST, botonSeleccionadorArchivos);
-		springLayout.putConstraint(SpringLayout.EAST, areaTexto, -21, SpringLayout.EAST, getContentPane());
 		getContentPane().add(areaTexto);
 		
 		lblCurrentFile = new JLabel("Archivo Actual: ");
+		springLayout.putConstraint(SpringLayout.WEST, lblCurrentFile, 24, SpringLayout.WEST, getContentPane());
 		springLayout.putConstraint(SpringLayout.SOUTH, lblCurrentFile, -185, SpringLayout.SOUTH, getContentPane());
 		springLayout.putConstraint(SpringLayout.NORTH, progressBar, 6, SpringLayout.SOUTH, lblCurrentFile);
 		lblCurrentFile.setVisible(false);
-		springLayout.putConstraint(SpringLayout.WEST, lblCurrentFile, 0, SpringLayout.WEST, botonSeleccionadorArchivos);
 		lblCurrentFile.setForeground(Color.WHITE);
 		lblCurrentFile.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 		getContentPane().add(lblCurrentFile);
 		
 		cmbPublicacionHomolodaga = new JComboBox<String>();
 		springLayout.putConstraint(SpringLayout.NORTH, cmbPublicacionHomolodaga, 6, SpringLayout.SOUTH, lblPublicacinHomologada);
-		springLayout.putConstraint(SpringLayout.WEST, cmbPublicacionHomolodaga, 0, SpringLayout.WEST, botonSeleccionadorArchivos);
+		springLayout.putConstraint(SpringLayout.WEST, cmbPublicacionHomolodaga, 24, SpringLayout.WEST, getContentPane());
 		springLayout.putConstraint(SpringLayout.SOUTH, cmbPublicacionHomolodaga, 29, SpringLayout.SOUTH, lblPublicacinHomologada);
 		springLayout.putConstraint(SpringLayout.EAST, cmbPublicacionHomolodaga, -21, SpringLayout.EAST, getContentPane());
 		getContentPane().add(cmbPublicacionHomolodaga);
 		
+		final JMenuBar menuBar = new JMenuBar();
+		menuBar.setVisible(false);
+		springLayout.putConstraint(SpringLayout.NORTH, lblNewLabel, 6, SpringLayout.SOUTH, menuBar);
+		springLayout.putConstraint(SpringLayout.NORTH, menuBar, 0, SpringLayout.NORTH, getContentPane());
+		springLayout.putConstraint(SpringLayout.WEST, menuBar, 0, SpringLayout.WEST, getContentPane());
+		springLayout.putConstraint(SpringLayout.EAST, menuBar, 452, SpringLayout.WEST, getContentPane());
+		getContentPane().add(menuBar);
+		
+		JMenu mnConfig = new JMenu("Publicaciones homologadas");
+		menuBar.add(mnConfig);
+		
+		menuItemSeleccionar = new JMenuItem("Seleccionar cat\u00E1logo");
+		mnConfig.add(menuItemSeleccionar);
+		
+		menuItemRecargar = new JMenuItem("Recargar cat\u00E1logo");
+		mnConfig.add(menuItemRecargar);
+		
+		// Se llena el combobox de publicaciones homologadas
+		try {
+			/* Se obtiene el directorio desde donde se ejcuta la aplicación. Ese será el directorio por defecto. */
+			catalogoPublicaciones = new java.io.File( "." ).getCanonicalPath()+"\\Publicaciones.txt";
+			populatePubs();
+			
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			JOptionPane.showMessageDialog(null,"No se puede obtener el direcotio acutal de trabajo");
+		}		
 
 		// Agregar funcionalidad al botón Iniciar
 		botonSeleccionadorArchivos.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				botonSeleccionadorArchivos.setEnabled(false);
+				// botonSeleccionadorArchivos.setEnabled(false);
+				
 				SeleccionadorArchivosGrafico seleccionador = new SeleccionadorArchivosGrafico(
 						"Archivos provenientes de Scopus/WOS (*.csv)",
 						new String[] { "csv", "txt" }); // Archivos con extensión csv y txt
+				
 				archivosOriginales = seleccionador.getArchivosSeleccionados();
 				archivosOriginales_conRuta = seleccionador.getArchivosSeleccionados_ruta();
 				
 				if(archivosOriginales.length <= 0)
 					botonSeleccionadorArchivos.setEnabled(true);
+				else{
 					
+					int indice = archivosOriginales[0].indexOf('.');
+					String nombreArchivoLimpio = archivosOriginales[0].substring(0, indice);
+					
+					lblCurrentFile.setText("Archivo actual: " + nombreArchivoLimpio);
+					lblCurrentFile.setVisible(true);
+				}					
 			}
 		});
 
@@ -1858,18 +1978,56 @@ public class XSVToSCIT extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
 				
-				pubHomologada = cmbPublicacionHomolodaga.getSelectedItem().toString().toUpperCase();						
+				if(cmbPublicacionHomolodaga.getSelectedIndex() != -1)
+					pubHomologada = cmbPublicacionHomolodaga.getSelectedItem().toString().toUpperCase();
+				else
+					pubHomologada = "";
+				
+				if(!pubHomologada.isEmpty()){
+					int dialogResult; 
+					dialogResult = JOptionPane.showConfirmDialog(null, "Todos los documentos princpales de este archivo se procesarán como provenientes de \"" + pubHomologada + "\". ¿Está de acuerdo?", "ATENCIÓN", 2);
+					if(dialogResult != JOptionPane.YES_OPTION)
+						return;
+				}
 
 				if (archivosOriginales.length > 0){
-					botonIniciar.setEnabled(false);					
+					botonIniciar.setEnabled(false);		
+					botonSeleccionadorArchivos.setEnabled(false);
+					cmbPublicacionHomolodaga.setEnabled(false);
+					source.setEnabled(false);
 					new Thread(new thread1()).start();
 				}else{
 					botonSeleccionadorArchivos.setEnabled(true);
 					botonIniciar.setEnabled(true);
+					cmbPublicacionHomolodaga.setEnabled(true);
+					source.setEnabled(true);
 				}
+			}
+		});
+		
+		// Selecciona un catálogo de publicaciones homologadas
+		menuItemSeleccionar.addActionListener(new ActionListener() {			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub								
+				seleccionarCatalogo();
+				populatePubs();
 			}
 		});		
 		
+		addMouseMotionListener(new MouseAdapter() {
+			@Override
+            public void mouseMoved(MouseEvent e) {
+				//System.out.println(e.getLocationOnScreen().x + " " + e.getLocationOnScreen().y);
+				if((e.getLocationOnScreen().y > 127 && e.getLocationOnScreen().y < 151) && (e.getLocationOnScreen().x > 103 && e.getLocationOnScreen().x < 212)){
+					menuBar.setVisible(true);
+				}
+				else{ 
+					menuBar.setVisible(false);
+				}
+            }
+        });
+
 	}
 	
 	public String quitaCaracteresEspeciales(String cadena) {
