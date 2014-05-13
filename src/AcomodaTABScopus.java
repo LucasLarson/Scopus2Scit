@@ -16,6 +16,7 @@ public class AcomodaTABScopus
 {
 	private String [] renglones;
 	private String salidaCorrecta = "";
+	private String header = "";
 
 	public AcomodaTABScopus( String cadenaArchivo, JTextArea areaTexto )
 	{
@@ -28,7 +29,7 @@ public class AcomodaTABScopus
 		salidaCorrecta = "";
 
 		renglones = cadenaArchivo.split("\n");
-
+		
 		// guardo los valores del encabezado para conocer las posiciones de cada elemento
 		encabezado = renglones[0].split("\t");
 
@@ -37,18 +38,21 @@ public class AcomodaTABScopus
 		for( int i=0; i<encabezado.length; i++ )
 		{
 			if( encabezado[i].compareTo("Ï»¿AUTHORS")==0 )
-				salidaCorrecta += "AUTHORS" + "\t";
+				header += "AUTHORS" + "\t";
 			else
-				salidaCorrecta += encabezado[i] + "\t";
+				header += encabezado[i] + "\t";
 		}
-		salidaCorrecta += "\n";
-
+		
+		header += "\n";
+		salidaCorrecta = header;
+		
 		// Buscamos Link (la columna que suele desfasarse en Scopus debido a los campos anteriores)
-		posicionLink = encuentraIndice(encabezado,"LINK");
-
+		posicionLink = encuentraIndice(encabezado,"LINK");	
+		
+		
+		
 		while( contador<renglones.length )
-		{
-			
+		{			
 			areaTexto.setText("Acomodando columnas recorridas...\n");
 			areaTexto.append(renglones[contador]);
 			
@@ -56,13 +60,13 @@ public class AcomodaTABScopus
 			entradasSeparadas = renglones[contador].split("\t");
 
 			columnaActual = posicionLink;
-
+			
 			if( columnaActual != -1)
 			{
 				//Copio la primera parte íntegra
 				for(int i=0; i<columnaActual; i++)
-					renglon += entradasSeparadas[i] + "\t";
-
+					renglon += entradasSeparadas[i] + "\t";				
+			
 				// Ahora, verifico si el dato en la columna actual corresponde a un link:
 				// En caso afirmativo, copio tal cual el resto del renglón
 				if( entradasSeparadas[columnaActual].startsWith("HTTP") || entradasSeparadas[columnaActual].startsWith("http") )
@@ -73,9 +77,15 @@ public class AcomodaTABScopus
 				}
 				else
 				{
+					if(renglones[contador].contains("Ï»¿AUTHORS")){			
+						salidaCorrecta = header;
+						continue;
+					}
+					
 					//Busco el dato que comienza con HTTP:
-					while( !entradasSeparadas[columnaActual].startsWith("HTTP") && columnaActual<entradasSeparadas.length )
+					while( !entradasSeparadas[columnaActual].startsWith("HTTP") && columnaActual<entradasSeparadas.length ){						
 						columnaActual++;
+					}
 
 					//Copio la segunda parte íntegra
 					for(int i=columnaActual; i<entradasSeparadas.length; i++)
@@ -90,7 +100,6 @@ public class AcomodaTABScopus
 					renglon += entradasSeparadas[i] + "\t";
 
 			}
-
 
 			salidaCorrecta += renglon + "\n";
 			contador++;

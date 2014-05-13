@@ -52,6 +52,9 @@ public class SeleccionadorArchivosGrafico
 			
 			//System.out.println("RUTA: " + ruta);
 			new EscribirEnArchivoTexto( ruta,"rutaDefecto.conf" );
+		}else{
+			archivosSeleccionados = null;
+			archivosSeleccionados_ruta = null;
 		}
 	}
 	

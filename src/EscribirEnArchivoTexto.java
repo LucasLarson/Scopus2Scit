@@ -19,8 +19,11 @@ public class EscribirEnArchivoTexto
         PrintWriter pw = null;
         try
         {
-            		
-			if(nombreArchivoDestino.contains("_INTITUCIONES.LOG")){
+            if(nombreArchivoDestino.contains("_INTITUCIONES2.LOG")){
+            	archivo = new FileWriter( nombreArchivoDestino,true );
+				pw = new PrintWriter(archivo);
+				pw.println( cadena+"\n");
+            }else if(nombreArchivoDestino.contains("_INTITUCIONES.LOG")){
 				archivo = new FileWriter( nombreArchivoDestino,true );
 				pw = new PrintWriter(archivo);
 				pw.println( cadena+"\n");

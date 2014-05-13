@@ -1,3 +1,7 @@
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 /**	
  * @(#)CatalogoPaises.java
  *
@@ -13,66 +17,285 @@ public class CatalogoPaises
 {
 	private String [] paises;
 	private final int NUMERO_PAISES=230; 
+
+	//Conexion a la base de datos
+	ConnectionFactory db = new ConnectionFactory();
 	
 	public CatalogoPaises( )
 	{
-		obtenerPaises();
+		//obtenerPaises();
+	}
+	
+	String infierePais( String cadena ){
+		
+		String pais = "";
+
+		// La cadena se separa por espacios, porque no viene separada por comas
+		String [] tokens = cadena.split("\\s");
+		
+		// Se extrae el ultimo token de la cadena, que debe corresponder al país o a un fragmento del pais
+		pais = tokens[tokens.length - 1];
+		
+		pais = validaPais(pais);
+		
+		if(pais.equals("NO IDENTIFICADO"))
+			pais = tokens[tokens.length - 1];
+		else
+			return pais;		
+		
+		// Se trata de inferir si un pais esta compuesto por mas de un token		
+		if(pais.equals("BARBUDA"))
+			return "ANTIGUA AND BARBUDA";
+		
+		if(pais.equals("ANTILLES") && cadena.contains("NETHERLANDS ANTILLES"))
+			return "NETHERLANDS ANTILLES";
+		
+		if(pais.equals("ARABIA"))
+			return "SAUDI ARABIA";
+		
+		if(pais.equals("HERZEGOVINA"))
+			return "BOSNIA AND HERZEGOVINA";
+		
+		if(pais.equals("FASO"))
+			return "BURKINA FASO";
+		
+		if(pais.equals("VERDE"))
+			return "CAPE VERDE";
+		
+		if(pais.equals("CITY"))
+			return "VATICAN CITY";
+		
+		if(pais.equals("KOREA") && cadena.contains("NORTH KOREA"))
+			return "NORTH KOREA";
+		
+		if(pais.equals("DIVOIRE"))
+			return "COTE DIVOIRE";
+		
+		if(pais.equals("RICA"))
+			return "COSTA RICA";
+		
+		if(pais.equals("EMIRATES"))
+			return "UNITED ARAB EMIRATES";
+		
+		if(pais.equals("AMERICA") || cadena.contains("UNIDATED STATES") || cadena.endsWith("US"))
+			return "UNITED STATES OF AMERICA";
+		
+		if(pais.equals("STATES"))
+			return "MALAY STATES";
+		
+		if(pais.equals("PHILIPPINES"))
+			return "REPUBLIC OF THE PHILIPPINES";
+		
+		if(pais.equals("BISSAU"))
+			return "GUINEA BISSAU";
+		
+		if(pais.equals("GUINEA") && cadena.contains("EQUATORIAL"))
+			return "EQUATORIAL GUINEA";
+		
+		if(pais.equals("GUIANA"))
+			return "FRENCH GUIANA";
+		
+		if(pais.equals("KONG"))
+			return "HONG KONG";
+		
+		if(pais.equals("MAN"))
+			return "ISLE OF MAN";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("CHANNEL"))
+			return "CHANNEL ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("CAYMAN"))
+			return "CAYMAN ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("COOK"))
+			return "COOK ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("FALKLAND"))
+			return "FALKLAND ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("MARIANA"))
+			return "NORTHERN MARIANA ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("MARSHALL"))
+			return "MARSHALL ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("SOLOMON"))
+			return "SOLOMON ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("CAICOS"))
+			return "TURKS AND CAICOS ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("VIRGIN"))
+			return "BRITISH VIRGIN ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("FUTUNA"))
+			return "WALLIS AND FUTUNA ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("PALAU"))
+			return "PALAU ISLANDS";
+		
+		if(pais.equals("ISLANDS") && cadena.contains("PITCAIRN"))
+			return "PITCAIRN ISLANDS";
+		
+		if(pais.equals("CALEDONIA"))
+			return "NEW CALEDONIA";
+		
+		if(pais.equals("ZEALAND"))
+			return "NEW ZEALAND";
+		
+		if(pais.equals("GUINEA") && cadena.contains("PAPUA NEW"))
+			return "PAPUA NEW GUINEA";
+		
+		if(pais.equals("POLYNESIA"))
+			return "FRENCH POLYNESIA";
+		
+		if(pais.equals("RICO"))
+			return "PUERTO RICO";
+		
+		if(pais.equals("KINGDOM"))
+			return "UNITED KINGDOM";
+		
+		if(pais.equals("REPUBLIC") && cadena.contains("CZECH"))
+			return "CZECH REPUBLIC";
+		
+		if(pais.equals("REPUBLIC") && cadena.contains("DOMINICAN"))
+			return "DOMINICAN REPUBLIC";
+		
+		if(pais.equals("REPUBLIC") && cadena.contains("AFRICAN"))
+			return "CENTRAL AFRICAN REPUBLIC";
+		
+		if(pais.equals("REPUBLIC") && cadena.contains("YEMEN"))
+			return "YEMEN REPUBLIC";
+		
+		if(pais.equals("NEVIS") && cadena.contains("CHRISTOPHER"))
+			return "SAINT CHRISTOPHER NEVIS";
+		
+		if(pais.equals("MIQUELON"))
+			return "SAINT PIERRE AND MIQUELON";
+		
+		if(pais.equals("GRENADINES"))
+			return "SAINT VINCENT AND THE GRENADINES";
+		
+		if(pais.equals("HELENA"))
+			return "SAINT HELENA";
+		
+		if(pais.equals("LUCIA"))
+			return "SAINT LUCIA";
+		
+		if(pais.equals("PRINCIPE"))
+			return "SAO TOME E PRINCIPE";
+		
+		if(pais.equals("LEONE"))
+			return "SIERRA LEONE";
+		
+		if(pais.equals("AFRICA"))
+			return "SOUTH AFRICA";
+		
+		if(pais.equals("LANKA"))
+			return "SRI LANKA";
+		
+		if(pais.equals("TIMOR"))
+			return "EAST TIMOR";
+		
+		if(pais.equals("TOBAGO"))
+			return "TRINIDAD AND TOBAGO";
+		
+		if(pais.equals("KOREA") && cadena.contains("SOUTH"))
+			return "REPUBLIC OF KOREA (SOUTH KOREA)";
+		
+		if(pais.equals("UNION"))
+			return "EUROPEAN UNION";
+		
+		return "NO IDENTIFICADO";
 	}
 	
 	String validaPais( String pais )
 	{
+		ResultSet rs =  null;		
+		PreparedStatement pstmt = null;
+		String sql = "";
+		
+		//Se abre la conexión a la BD
+		db.conn = db.getConnection();
+		
 		// Reemplazar algunos países:
-			if( pais.contains("ENGLAND") == true )
-				pais = "UNITED KINGDOM";
+		if( pais.contains("ENGLAND") == true )
+			pais = "UNITED KINGDOM";
+		
+		if( pais.contains("WALES") == true )
+			pais = "UNITED KINGDOM";
+																																					
+		if( pais.contains("SCOTLAND") == true )
+			pais = "UNITED KINGDOM";
+		
+		if( pais.contains("IRELAND") == true )
+			pais = "UNITED KINGDOM";
 			
-			if( pais.contains("WALES") == true )
-				pais = "UNITED KINGDOM";
+		if( pais.endsWith("UK") == true )
+			pais = "UNITED KINGDOM";
 			
-			if( pais.contains("SCOTLAND") == true )
-				pais = "UNITED KINGDOM";
+		if( pais.endsWith("USA") == true )
+			pais = "UNITED STATES OF AMERICA";
+		
+		if( pais.contains("RUSSIA") == true )
+			pais = "RUSSIA";
+		
+		if( pais.contains("RUSSIA FEDERATION") == true )
+			pais = "RUSSIA";
 			
-			if( pais.contains("IRELAND") == true )
-				pais = "UNITED KINGDOM";
-				
-			if( pais.endsWith("UK") == true )
-				pais = "UNITED KINGDOM";
-				
-			if( pais.endsWith("USA") == true )
-				pais = "UNITED STATES OF AMERICA";
+		if( pais.endsWith("UNITED STATES") == true )
+			pais = "UNITED STATES OF AMERICA";
 			
-			if( pais.contains("RUSSIA") == true )
-				pais = "RUSSIA";
-				
-			if( pais.endsWith("UNITED STATES") == true )
-				pais = "UNITED STATES OF AMERICA";
-				
-			if( pais.contains("CHINA") == true )
-				pais = "CHINA";
+		if( pais.contains("CHINA") == true )
+			pais = "CHINA";			
+		
+		if( pais.contains("SOUTH KOREA") == true )
+			pais = "REPUBLIC OF KOREA (SOUTH KOREA)";
+		 
+		if( pais.contains("REPUBLIC OF KOREA") == true )
+			pais = "REPUBLIC OF KOREA (SOUTH KOREA)";
+
+		
+		if( pais.contains("PHILIPPINES") == true )
+			pais = "REPUBLIC OF THE PHILIPPINES";
 			
-			if( pais.contains("SOUTH KOREA") == true )
-				pais = "REPUBLIC OF KOREA (SOUTH KOREA)";
-				
-			if( pais.contains("PHILIPPINES") == true )
-				pais = "REPUBLIC OF THE PHILIPPINES";
-				
-			if( pais.contains("NETHERLANDS") == true )
-				pais = "NETHERLANDS";
+		if( pais.contains("NETHERLANDS") == true )
+			pais = "NETHERLANDS";
+		
+		if( pais.contains("LUXEMBOURG") == true )
+			pais = "LUXEMBURG";
+		
+		if( pais.contains("PRAGUE") == true )
+			pais = "CZECH REPUBLIC";
 			
-			if( pais.contains("LUXEMBOURG") == true )
-				pais = "LUXEMBURG";
+		try {
+			sql = "SELECT 1 FROM PAIS WHERE pais = ?";			
+			pstmt = db.conn.prepareStatement(sql);
+			pstmt.setString(1, pais);
 			
-			if( pais.contains("PRAGUE") == true )
-				pais = "CZECH REPUBLIC";
+			rs = pstmt.executeQuery();
+			
+			if (rs.next())
+                return pais;
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally{
+			db.closeConnection();
+		}		
 	
+		/*
 		//int idPais=0;
 		for ( int i=0; i<paises.length; i++ )
 		{
 			if( pais.contains( paises[i] ) )
 				return paises[i];
-		}
+		}*/
 		
-		//return "*" + pais;
-		return "NO DISPONIBLE";
+		db.closeConnection();
+		//return "NO DISPONIBLE";
+		return "NO IDENTIFICADO";
 	}
 	
 	void obtenerPaises( )
@@ -241,8 +464,7 @@ public class CatalogoPaises
 		paises[contadorPaises] = "NEW ZEALAND";				contadorPaises++;
 		paises[contadorPaises] = "POLYNESIA";				contadorPaises++;
 		paises[contadorPaises] = "MICRONESIA";				contadorPaises++;
-		paises[contadorPaises] = "MELANESIA";				contadorPaises++;
-		paises[contadorPaises] = "OMAN";					contadorPaises++;
+		paises[contadorPaises] = "MELANESIA";				contadorPaises++;		
 		paises[contadorPaises] = "NETHERLANDS";				contadorPaises++;
 		paises[contadorPaises] = "PAKISTAN";				contadorPaises++;
 		paises[contadorPaises] = "PALAU ISLANDS";			contadorPaises++;
@@ -264,6 +486,7 @@ public class CatalogoPaises
 		paises[contadorPaises] = "REUNION";					contadorPaises++;
 		paises[contadorPaises] = "RWANDA";					contadorPaises++;
 		paises[contadorPaises] = "ROMANIA";					contadorPaises++;
+		paises[contadorPaises] = "OMAN";					contadorPaises++;
 		paises[contadorPaises] = "SAMOA";					contadorPaises++;
 		paises[contadorPaises] = "SAINT CHRISTOPHER NEVIS";		contadorPaises++;
 		paises[contadorPaises] = "SAINT PIERRE AND MIQUELON";	contadorPaises++;

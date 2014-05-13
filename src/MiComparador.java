@@ -3,6 +3,7 @@ import java.util.Comparator;
 
 public class MiComparador implements Comparator
 {
+	@Override
 	public int compare(Object objeto1, Object objeto2)
 	{
 		int resultado=0; 
